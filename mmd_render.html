@@ -1,0 +1,1196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown File Loader & Renderer</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+        rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-hover: #2563eb;
+            --bg-color: #f9fafb;
+            --text-color: #1f2937;
+            --border-color: #e5e7eb;
+            --header-bg: #f3f4f6;
+            --card-bg: #ffffff;
+            --code-bg: #f8fafc;
+            --danger-color: #ef4444;
+            --success-color: #10b981;
+            --bg-color-dark: #1a1a1a;
+            --text-color-dark: #e0e0e0;
+            --header-bg-dark: #2d2d2d;
+            --border-color-dark: #404040;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            padding: 1rem;
+        }
+
+        #frame {
+            max-width: 1024px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--header-bg);
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 1.75rem;
+            margin: 0;
+        }
+
+        .file-selection {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .file-input-container {
+            position: relative;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-input-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0.6rem 1rem;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-color);
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            width: 100%;
+        }
+
+        .file-input-label:hover {
+            background-color: var(--header-bg);
+        }
+
+        .file-input-label svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .file-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+        }
+
+        .file-format-hint {
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 4px;
+            margin-left: 8px;
+        }
+
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 250px);
+            min-height: 500px;
+        }
+
+        .tab-container {
+            display: flex;
+            background-color: var(--header-bg);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            border-bottom: 3px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        #source,
+        #output {
+            flex: 1;
+            padding: 1.5rem 2rem;
+            overflow-y: auto;
+            display: none;
+        }
+
+        #source {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            border: none;
+            resize: none;
+            outline: none;
+            line-height: 1.7;
+            white-space: pre-wrap;
+        }
+
+        #output {
+            font-size: 16px;
+        }
+
+        #output.active,
+        #source.active {
+            display: block;
+        }
+
+        .notification {
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .notification.success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--success-color);
+            color: #065f46;
+        }
+
+        .notification.error {
+            background-color: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid var(--danger-color);
+            color: #b91c1c;
+        }
+
+        .notification.info {
+            background-color: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid var(--primary-color);
+            color: #1e40af;
+        }
+
+        .notification-icon {
+            width: 20px;
+            height: 20px;
+            flex-shrink: 0;
+        }
+
+        /* Styling for the rendered markdown */
+        #output h2 {
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+            font-size: 1.5rem;
+            color: #111827;
+        }
+
+        #output h3 {
+            margin-top: 1.25rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 1.25rem;
+            color: #111827;
+        }
+
+        #output p {
+            margin-bottom: 1rem;
+        }
+
+        #output hr {
+            margin: 2rem 0;
+            border: 0;
+            height: 1px;
+            background-color: var(--border-color);
+        }
+
+        #output pre {
+            background-color: var(--code-bg);
+            padding: 1rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 14px;
+            margin: 1rem 0;
+            border: 1px solid var(--border-color);
+        }
+
+        #output code {
+            font-family: 'JetBrains Mono', monospace;
+            background-color: var(--code-bg);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        #output pre code {
+            padding: 0;
+            background-color: transparent;
+        }
+
+        #output blockquote {
+            border-left: 4px solid var(--primary-color);
+            padding-left: 1rem;
+            margin-left: 0;
+            color: #4b5563;
+        }
+
+        #output a {
+            color: var(--primary-color);
+            text-decoration: none;
+        }
+
+        #output a:hover {
+            text-decoration: underline;
+            color: var(--primary-hover);
+        }
+
+        #placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: #6b7280;
+            text-align: center;
+        }
+
+        #placeholder svg {
+            width: 60px;
+            height: 60px;
+            color: #d1d5db;
+            margin-bottom: 1rem;
+        }
+
+        #placeholder p {
+            font-size: 16px;
+            margin-bottom: 0.5rem;
+        }
+
+        #placeholder span {
+            font-size: 14px;
+            max-width: 400px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: flex-end;
+            padding: 1rem 2rem;
+            background-color: var(--header-bg);
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: white;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--bg-color);
+        }
+
+        /* Typography and Reading Experience Optimization */
+        #output,
+        .fullscreen-content {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+            font-size: 18px;
+            line-height: 1.75;
+            color: #2c3e50;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* Headings Hierarchy */
+        #output h1,
+        .fullscreen-content h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            line-height: 1.2;
+            margin: 3rem 0 1.5rem 0;
+            color: #1a202c;
+            border-bottom: 3px solid #3182ce;
+            padding-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        #output h2,
+        .fullscreen-content h2 {
+            font-size: 2rem;
+            font-weight: 600;
+            line-height: 1.3;
+            margin: 2.5rem 0 1.25rem 0;
+            color: #2d3748;
+            position: relative;
+            padding-left: 1rem;
+        }
+
+        #output h2::before,
+        .fullscreen-content h2::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.2em;
+            width: 4px;
+            height: 1.2em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 2px;
+        }
+
+        #output h3,
+        .fullscreen-content h3 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin: 2rem 0 1rem 0;
+            color: #4a5568;
+        }
+
+        #output h4,
+        .fullscreen-content h4 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin: 1.75rem 0 0.75rem 0;
+            color: #718096;
+        }
+
+        #output h5,
+        .fullscreen-content h5,
+        #output h6,
+        .fullscreen-content h6 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            line-height: 1.4;
+            margin: 1.5rem 0 0.5rem 0;
+            color: #a0aec0;
+        }
+
+        /* Paragraph Spacing */
+        #output p,
+        .fullscreen-content p {
+            margin: 1.5rem 0;
+            line-height: 1.8;
+            text-align: justify;
+            text-justify: inter-word;
+        }
+
+        /* First paragraph after headings */
+        #output h1+p,
+        .fullscreen-content h1+p,
+        #output h2+p,
+        .fullscreen-content h2+p,
+        #output h3+p,
+        .fullscreen-content h3+p {
+            margin-top: 0.75rem;
+        }
+
+        /* Lists */
+        #output ul,
+        .fullscreen-content ul,
+        #output ol,
+        .fullscreen-content ol {
+            margin: 1.5rem 0;
+            padding-left: 2rem;
+            line-height: 1.8;
+        }
+
+        #output li,
+        .fullscreen-content li {
+            margin: 0.75rem 0;
+        }
+
+        #output li p,
+        .fullscreen-content li p {
+            margin: 0.5rem 0;
+        }
+
+        /* Blockquotes */
+        #output blockquote,
+        .fullscreen-content blockquote {
+            margin: 2rem 0;
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-left: 5px solid #4299e1;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            font-size: 1.05em;
+            line-height: 1.8;
+            position: relative;
+        }
+
+        #output blockquote::before,
+        .fullscreen-content blockquote::before {
+            content: '"';
+            font-size: 4rem;
+            color: #cbd5e0;
+            position: absolute;
+            top: -0.5rem;
+            left: 0.5rem;
+            font-family: Georgia, serif;
+        }
+
+        /* Code blocks */
+        #output pre,
+        .fullscreen-content pre {
+            margin: 2rem 0;
+            padding: 1.5rem;
+            background: #2d3748;
+            color: #e2e8f0;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            font-size: 0.9em;
+            line-height: 1.6;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        #output code,
+        .fullscreen-content code {
+            font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+            font-size: 0.9em;
+            background: #f7fafc;
+            color: #e53e3e;
+            padding: 0.2em 0.4em;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+        }
+
+        #output pre code,
+        .fullscreen-content pre code {
+            background: none;
+            color: inherit;
+            padding: 0;
+            border: none;
+            font-size: inherit;
+        }
+
+        /* Math equations */
+        #output .MathJax,
+        .fullscreen-content .MathJax,
+        #output mjx-container,
+        .fullscreen-content mjx-container {
+            margin: 2rem 0 !important;
+            font-size: 1.2em !important;
+        }
+
+        #output mjx-container[display="true"],
+        .fullscreen-content mjx-container[display="true"] {
+            margin: 2.5rem 0 !important;
+            text-align: center;
+        }
+
+        /* Inline math */
+        #output mjx-container:not([display="true"]),
+        .fullscreen-content mjx-container:not([display="true"]) {
+            margin: 0 0.25rem !important;
+            display: inline-block !important;
+        }
+
+        /* Tables */
+        #output table,
+        .fullscreen-content table {
+            margin: 2rem 0;
+            border-collapse: collapse;
+            width: 100%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #output th,
+        .fullscreen-content th,
+        #output td,
+        .fullscreen-content td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+            line-height: 1.6;
+        }
+
+        #output th,
+        .fullscreen-content th {
+            background: #f7fafc;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        /* Horizontal rules */
+        #output hr,
+        .fullscreen-content hr {
+            margin: 3rem 0;
+            border: none;
+            height: 3px;
+            background: linear-gradient(90deg, transparent 0%, #cbd5e0 50%, transparent 100%);
+            border-radius: 1.5px;
+        }
+
+        /* Strong and emphasis */
+        #output strong,
+        .fullscreen-content strong {
+            font-weight: 700;
+            color: #1a202c;
+        }
+
+        #output em,
+        .fullscreen-content em {
+            font-style: italic;
+            color: #4a5568;
+        }
+
+        /* Links */
+        #output a,
+        .fullscreen-content a {
+            color: #3182ce;
+            text-decoration: none;
+            border-bottom: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        #output a:hover,
+        .fullscreen-content a:hover {
+            color: #2c5282;
+            border-bottom-color: #3182ce;
+        }
+
+        /* Images */
+        #output img,
+        .fullscreen-content img {
+            max-width: 100%;
+            height: auto;
+            margin: 2rem 0;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Fullscreen overlay styles - 固定為白色背景 */
+        .fullscreen-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #ffffff !important;
+            /* 強制白色背景 */
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+        }
+
+        .fullscreen-overlay.active {
+            display: flex;
+        }
+
+        .fullscreen-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+
+        .fullscreen-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .fullscreen-content {
+            flex: 1;
+            padding: 3rem;
+            overflow-y: auto;
+            background: #ffffff !important;
+            /* 強制白色背景 */
+            color: #2c3e50;
+            /* 確保文字顏色適合白色背景 */
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            #frame {
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            header {
+                padding: 1rem;
+            }
+
+            .file-selection {
+                padding: 1rem;
+            }
+
+            #source,
+            #output {
+                padding: 1rem;
+            }
+
+            .editor-container {
+                height: calc(100vh - 200px);
+            }
+
+            #output,
+            .fullscreen-content {
+                font-size: 16px;
+                line-height: 1.7;
+                padding: 1rem;
+            }
+
+            #output h1,
+            .fullscreen-content h1 {
+                font-size: 2rem;
+                margin: 2rem 0 1rem 0;
+            }
+
+            #output h2,
+            .fullscreen-content h2 {
+                font-size: 1.75rem;
+                margin: 1.75rem 0 1rem 0;
+            }
+
+            #output h3,
+            .fullscreen-content h3 {
+                font-size: 1.5rem;
+            }
+
+            .fullscreen-header {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .fullscreen-content {
+                padding: 1.5rem;
+            }
+
+            #output ul,
+            .fullscreen-content ul,
+            #output ol,
+            .fullscreen-content ol {
+                padding-left: 1.5rem;
+            }
+        }
+
+        /* 移除深色模式對 fullscreen 的影響 */
+        @media (prefers-color-scheme: dark) {
+            .fullscreen-overlay {
+                background: #ffffff !important;
+                /* 即使在深色模式下也保持白色 */
+                color: #2c3e50 !important;
+            }
+
+            .fullscreen-header {
+                background: #f8f9fa !important;
+                border-bottom-color: #e9ecef !important;
+            }
+
+            .fullscreen-header h2 {
+                color: #333 !important;
+            }
+
+            .fullscreen-content {
+                background: #ffffff !important;
+                /* 即使在深色模式下也保持白色 */
+                color: #2c3e50 !important;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+
+            #output,
+            .fullscreen-content {
+                font-size: 12pt;
+                line-height: 1.6;
+                color: #000;
+            }
+
+            #output h1,
+            .fullscreen-content h1 {
+                font-size: 18pt;
+                page-break-after: avoid;
+            }
+
+            #output h2,
+            .fullscreen-content h2 {
+                font-size: 16pt;
+                page-break-after: avoid;
+            }
+
+            #output h3,
+            .fullscreen-content h3 {
+                font-size: 14pt;
+                page-break-after: avoid;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="frame">
+        <header>
+            <h1>Markdown File Loader & Renderer</h1>
+        </header>
+
+        <div class="file-selection">
+            <div class="file-input-container">
+                <input type="file" id="file-input" class="file-input" accept=".md,.txt,.mmd,.markdown">
+                <label for="file-input" class="file-input-label">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <span class="file-name">Select a Markdown file</span>
+                </label>
+                <div class="file-format-hint">Supported formats: .md, .txt, .mmd, .markdown</div>
+            </div>
+
+            <button class="btn btn-secondary" id="example-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Load Example
+            </button>
+        </div>
+
+        <div class="tab-container">
+            <div class="tab" id="source-tab">Source</div>
+            <div class="tab active" id="preview-tab">Preview</div>
+        </div>
+
+        <div class="editor-container">
+            <div id="source"></div>
+            <div id="output" class="active">
+                <div id="placeholder">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p>No markdown file loaded</p>
+                    <span>Select a file using the button above to preview it</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="copy-btn" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    Copy HTML
+                </button>
+                <button class="btn btn-secondary" id="fullscreen-btn" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+                        viewBox="0 0 16 16">
+                        <path
+                            d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z" />
+                    </svg>
+                    Fullscreen
+                </button>
+                <button class="btn" id="refresh-btn" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Refresh Preview
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Fullscreen overlay -->
+    <div id="fullscreen-overlay" class="fullscreen-overlay">
+        <div class="fullscreen-header">
+            <h2>Markdown Preview - Fullscreen</h2>
+            <button class="btn btn-secondary" id="exit-fullscreen-btn">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+                Exit Fullscreen
+            </button>
+        </div>
+        <div id="fullscreen-content" class="fullscreen-content"></div>
+    </div>
+
+    <script>
+        // Load the Mathpix Markdown package
+        function loadScript() {
+            return new Promise((resolve, reject) => {
+                let script = document.createElement('script');
+                script.src = "https://cdn.jsdelivr.net/npm/mathpix-markdown-it@2/es5/bundle.js";
+                document.head.append(script);
+
+                script.onload = function () {
+                    const isLoaded = window.loadMathJax();
+                    if (isLoaded) {
+                        console.log('Mathpix Markdown loaded successfully!');
+                        resolve();
+                    } else {
+                        reject(new Error('Failed to load MathJax'));
+                    }
+                };
+
+                script.onerror = function () {
+                    reject(new Error('Failed to load Mathpix Markdown'));
+                };
+            });
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            // Remove any existing notifications
+            const existingNotification = document.querySelector('.notification');
+            if (existingNotification) {
+                existingNotification.remove();
+            }
+
+            // Create a new notification
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+
+            // Icon based on notification type
+            let iconPath = '';
+            if (type === 'success') {
+                iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />';
+            } else if (type === 'error') {
+                iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />';
+            } else {
+                iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />';
+            }
+
+            notification.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" class="notification-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          ${iconPath}
+        </svg>
+        <div>${message}</div>
+      `;
+
+            // Insert the notification at the top of the editor container
+            const editorContainer = document.querySelector('.editor-container');
+            editorContainer.insertBefore(notification, editorContainer.firstChild);
+
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Convert markdown to HTML
+        function convertMarkdown(markdownText) {
+            if (!markdownText) {
+                return '';
+            }
+
+            const output = document.getElementById('output');
+            try {
+                const options = {
+                    htmlTags: true
+                };
+
+                const html = window.markdownToHTML(markdownText, options);
+                return html;
+            } catch (error) {
+                showNotification(`Error converting markdown: ${error.message}`, 'error');
+                console.error('Conversion error:', error);
+                return `<div style="color: red; padding: 1rem;">Error converting markdown: ${error.message}</div>`;
+            }
+        }
+
+        // Fullscreen functionality
+        function enterFullscreen() {
+            const overlay = document.getElementById('fullscreen-overlay');
+            const fullscreenContent = document.getElementById('fullscreen-content');
+            const outputContent = document.getElementById('output');
+
+            // Copy the content to fullscreen overlay
+            fullscreenContent.innerHTML = outputContent.innerHTML;
+
+            // Show the overlay
+            overlay.classList.add('active');
+
+            // Update button text
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            fullscreenBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 9V4a2 2 0 00-2-2H3m6 5l6-6m0 18v-5a2 2 0 012-2h4m-6-5l6 6" />
+        </svg>
+        Exit Fullscreen
+      `;
+
+            // Add keyboard listener for ESC key
+            document.addEventListener('keydown', handleEscapeKey);
+        }
+
+        function exitFullscreen() {
+            const overlay = document.getElementById('fullscreen-overlay');
+
+            // Hide the overlay
+            overlay.classList.remove('active');
+
+            // Reset button text
+            const fullscreenBtn = document.getElementById('fullscreen-btn');
+            fullscreenBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
+            viewBox="0 0 16 16">
+            <path
+                d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z" />
+        </svg>
+        Fullscreen
+      `;
+
+            // Remove keyboard listener
+            document.removeEventListener('keydown', handleEscapeKey);
+        }
+
+        function toggleFullscreen() {
+            const overlay = document.getElementById('fullscreen-overlay');
+            if (overlay.classList.contains('active')) {
+                exitFullscreen();
+            } else {
+                enterFullscreen();
+            }
+        }
+
+        function handleEscapeKey(event) {
+            if (event.key === 'Escape') {
+                exitFullscreen();
+            }
+        }
+
+        // Read and process the file
+        function processFile(file) {
+            if (!file) return;
+
+            // Update file name display
+            const fileNameElement = document.querySelector('.file-name');
+            fileNameElement.textContent = file.name;
+
+            // Create a reader
+            const reader = new FileReader();
+
+            reader.onload = function (event) {
+                const markdownText = event.target.result;
+
+                // Display the source
+                const sourceElement = document.getElementById('source');
+                sourceElement.textContent = markdownText;
+
+                // Remove placeholder if it exists
+                const placeholder = document.getElementById('placeholder');
+                if (placeholder) {
+                    placeholder.remove();
+                }
+
+                // Convert and display the HTML
+                const outputElement = document.getElementById('output');
+                outputElement.innerHTML = convertMarkdown(markdownText);
+
+                // Enable buttons
+                document.getElementById('copy-btn').disabled = false;
+                document.getElementById('fullscreen-btn').disabled = false;
+                document.getElementById('refresh-btn').disabled = false;
+
+                showNotification(`File "${file.name}" loaded successfully.`, 'success');
+            };
+
+            reader.onerror = function () {
+                showNotification(`Failed to read file "${file.name}".`, 'error');
+            };
+
+            reader.readAsText(file);
+        }
+
+        // Copy rendered HTML to clipboard
+        function copyHTML() {
+            const output = document.getElementById('output');
+            const tempTextarea = document.createElement('textarea');
+            tempTextarea.value = output.innerHTML;
+            document.body.appendChild(tempTextarea);
+            tempTextarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextarea);
+
+            const copyBtn = document.getElementById('copy-btn');
+            const originalText = copyBtn.innerHTML;
+            copyBtn.innerHTML = `
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        Copied!
+      `;
+            setTimeout(() => {
+                copyBtn.innerHTML = originalText;
+            }, 2000);
+        }
+
+        // Load example markdown
+        function loadExample() {
+            const exampleMarkdown = `$x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}$
+
+好的，這就來為你鉅細靡遺地「開箱」Strang教授的《Introduction to Linear Algebra》第五版的第五章：**行列式 (Determinants)**！
+
+---
+
+## 線性代數學習筆記 | 第五章：行列式 (Determinants) - 矩陣的「魔法數字」
+
+嘿，各位線性代數的戰友們！我們已經一起闖過了矩陣運算、解線性方程組、向量空間等重要關卡。今天，我們要來探索一個既神秘又充滿力量的概念——**行列式 (Determinant)**。
+
+你可能會問，為什麼需要行列式？前面學的不是已經能解決很多問題了嗎？沒錯，高斯消去法 (Gaussian elimination) 確實是解方程組 \\(A\\boldsymbol{x} = \\boldsymbol{b}\\) 的主力。但是，「行列式」這個從方陣 (square matrix) \\(A\\) 算出來的*單一數字*，卻蘊含了關於這個矩陣驚人的資訊量。
+
+想像一下，你有一個方陣 \\(A\\)，你想知道它是不是可逆的 (invertible)？是不是奇異的 (singular)？它的行列式 (我們常寫作 \\(\\det(A)\\) 或 \\(|A|\\)，注意！是直桿不是方括號喔！) 就能立刻告訴你答案！如果 \\(\\det(A) = 0\\)，那 \\(A\\) 就是奇異矩陣，沒有逆矩陣 (inverse matrix)。反之，如果 \\(\\det(A) \\neq 0\\)，那 \\(A\\) 就是可逆的！`;
+
+            // Display the source
+            const sourceElement = document.getElementById('source');
+            sourceElement.textContent = exampleMarkdown;
+
+            // Remove placeholder if it exists
+            const placeholder = document.getElementById('placeholder');
+            if (placeholder) {
+                placeholder.remove();
+            }
+
+            // Convert and display the HTML
+            const outputElement = document.getElementById('output');
+            outputElement.innerHTML = convertMarkdown(exampleMarkdown);
+
+            // Update file name display
+            const fileNameElement = document.querySelector('.file-name');
+            fileNameElement.textContent = "example.md";
+
+            // Enable buttons
+            document.getElementById('copy-btn').disabled = false;
+            document.getElementById('fullscreen-btn').disabled = false;
+            document.getElementById('refresh-btn').disabled = false;
+
+            showNotification('Example markdown loaded successfully.', 'success');
+        }
+
+        // Tab switching
+        function switchTab(tabId) {
+            const sourceTab = document.getElementById('source-tab');
+            const previewTab = document.getElementById('preview-tab');
+            const source = document.getElementById('source');
+            const output = document.getElementById('output');
+
+            if (tabId === 'source') {
+                sourceTab.classList.add('active');
+                previewTab.classList.remove('active');
+                source.classList.add('active');
+                output.classList.remove('active');
+            } else {
+                sourceTab.classList.remove('active');
+                previewTab.classList.add('active');
+                source.classList.remove('active');
+                output.classList.add('active');
+            }
+        }
+
+        // Initialize the application
+        async function init() {
+            try {
+                await loadScript();
+
+                // Set up event listeners
+                document.getElementById('file-input').addEventListener('change', event => {
+                    const file = event.target.files[0];
+                    if (file) {
+                        processFile(file);
+                    }
+                });
+
+                document.getElementById('example-btn').addEventListener('click', loadExample);
+                document.getElementById('copy-btn').addEventListener('click', copyHTML);
+                document.getElementById('fullscreen-btn').addEventListener('click', toggleFullscreen);
+                document.getElementById('exit-fullscreen-btn').addEventListener('click', exitFullscreen);
+                document.getElementById('refresh-btn').addEventListener('click', () => {
+                    const source = document.getElementById('source').textContent;
+                    const output = document.getElementById('output');
+                    output.innerHTML = convertMarkdown(source);
+                    showNotification('Preview refreshed.', 'info');
+                });
+
+                document.getElementById('source-tab').addEventListener('click', () => switchTab('source'));
+                document.getElementById('preview-tab').addEventListener('click', () => switchTab('preview'));
+
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showNotification(`Failed to initialize: ${error.message}`, 'error');
+            }
+        }
+
+        // Start the application when page loads
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+
+</body>
+
+</html>
