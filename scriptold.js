@@ -61,7 +61,7 @@ function showNotification(message, type = 'info') {
     }
 
     notification.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" class="notification-icon" fill="none" viewBox="0 0 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" class="notification-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           ${iconPath}
         </svg>
         <div>${message}</div>
@@ -116,13 +116,9 @@ function enterFullscreen() {
     const overlay = document.getElementById('fullscreen-overlay');
     const fullscreenContent = document.getElementById('fullscreen-content');
     const outputContent = document.getElementById('output');
-    
-    // 【優化】: 進入全螢幕前，先根據當前原始碼刷新一次預覽，確保內容最新
-    const sourceContent = document.getElementById('source').textContent;
-    const currentHtml = convertMarkdown(sourceContent);
-    outputContent.innerHTML = currentHtml;
-    fullscreenContent.innerHTML = currentHtml;
 
+    // Copy the content to fullscreen overlay
+    fullscreenContent.innerHTML = outputContent.innerHTML;
 
     // Show the overlay
     overlay.classList.add('active');
@@ -410,11 +406,6 @@ async function init() {
         // Load Mathpix Markdown script
         await loadScript();
 
-        // 【主要修改】: 將 #source 元素設為可編輯
-        const sourceEditor = document.getElementById('source');
-        sourceEditor.setAttribute('contenteditable', 'true');
-
-
         // Set up event listeners
         document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
         
@@ -429,8 +420,6 @@ async function init() {
         document.getElementById('copy-btn').addEventListener('click', copyHTML);
         document.getElementById('fullscreen-btn').addEventListener('click', toggleFullscreen);
         document.getElementById('exit-fullscreen-btn').addEventListener('click', exitFullscreen);
-        
-        // Refresh 按鈕現在可以正常運作，因為 #source 的內容可以被使用者修改了
         document.getElementById('refresh-btn').addEventListener('click', () => {
             const source = document.getElementById('source').textContent;
             const output = document.getElementById('output');
