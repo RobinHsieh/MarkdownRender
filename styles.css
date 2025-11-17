@@ -668,6 +668,18 @@ h1 {
     display: inline-block !important;
 }
 
+/* 【使用者要求 - 精準修復 v2】
+   只為 *包含* <br> 標籤的 <div> 增加 line-height
+   - 使用 :has() 偽類選擇器
+   - 同時選取 #output 的直接子 <div> 和 li 內的 <div>
+*/
+#output > div:has(br),
+.fullscreen-content > div:has(br),
+#output li > div:has(br),
+.fullscreen-content li > div:has(br) {
+    line-height: 2.4; /* 你可以試著調整 2.0, 2.2, 2.5 看看效果 */
+}
+
 #output table,
 .fullscreen-content table {
     margin: 2rem 0;
