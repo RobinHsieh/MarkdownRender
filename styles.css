@@ -670,7 +670,8 @@ h1 {
     background: var(--card-bg);
     z-index: 1000;
     display: none;
-    flex-direction: column;
+    /* 【優化】: 移除 flex-direction，因為 header 不再是 flex item */
+    /* flex-direction: column; */
     transition: background 0.3s ease;
 }
 
@@ -678,6 +679,12 @@ h1 {
     display: flex;
 }
 
+/* 【優化】: 隱藏固定的 header */
+.fullscreen-header {
+    display: none; /* 完全隱藏 */
+}
+
+/*
 .fullscreen-header {
     display: flex;
     justify-content: space-between;
@@ -701,6 +708,44 @@ h1 {
     color: var(--text-color);
     transition: color 0.3s ease;
 }
+*/
+
+/* 【優化】: 退出按鈕的新樣式 */
+#exit-fullscreen-btn {
+    position: fixed; /* 固定在視窗上 */
+    top: 1.5rem;
+    right: 2rem;
+    z-index: 1020; /* 確保在最上層 */
+    
+    /* 變更為圓形按鈕 */
+    border-radius: 50%;
+    padding: 0.75rem; /* 調整 padding 使其變圓 */
+    width: 50px; /* 設置固定寬高 */
+    height: 50px;
+    
+    /* 移除文字 */
+    font-size: 0;
+    gap: 0;
+
+    /* 增加陰影 */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+
+    /* 預設半透明，滑過時才完全顯示 */
+    opacity: 0.7;
+    transition: all 0.3s ease;
+}
+
+#exit-fullscreen-btn:hover {
+    opacity: 1;
+    transform: scale(1.05); /* 輕微放大效果 */
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+#exit-fullscreen-btn svg {
+    width: 24px; /* 放大圖示 */
+    height: 24px;
+}
+
 
 .fullscreen-content {
     flex: 1;
@@ -759,11 +804,28 @@ h1 {
         font-size: 1.5rem;
     }
 
+    /* 【優化】: 調整手機上的退出按鈕位置 */
+    #exit-fullscreen-btn {
+        top: 1rem;
+        right: 1rem;
+        width: 44px;
+        height: 44px;
+        padding: 0.5rem;
+    }
+
+    #exit-fullscreen-btn svg {
+        width: 20px;
+        height: 20px;
+    }
+
+
+    /*
     .fullscreen-header {
         flex-direction: column;
         gap: 1rem;
         padding: 1rem;
     }
+    */
 
     .fullscreen-content {
         padding: 1.5rem;

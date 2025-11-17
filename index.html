@@ -95,15 +95,25 @@
 
     <!-- Fullscreen overlay -->
     <div id="fullscreen-overlay" class="fullscreen-overlay">
+        <!-- 【優化】: 移除固定的 Header -->
+        <!-- 
         <div class="fullscreen-header">
             <h2>Markdown Preview - Fullscreen</h2>
             <button class="btn btn-secondary" id="exit-fullscreen-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-                Exit Fullscreen
+                ...
             </button>
-        </div>
+        </div> 
+        -->
+
+        <!-- 【優化】: 將退出按鈕移至 Overlay 頂層，並用 CSS 將其定位在右上角 -->
+        <button class="btn btn-secondary" id="exit-fullscreen-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+            <!-- 【優化】: 按鈕上只顯示圖標，移除文字以求簡潔 -->
+            <!-- Exit Fullscreen -->
+        </button>
+
         <div id="fullscreen-content" class="fullscreen-content"></div>
     </div>
 
