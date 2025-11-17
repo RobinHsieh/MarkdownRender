@@ -1,15 +1,35 @@
+/*
+  【專業配色優化】
+  - 調整 :root 和 [data-theme="dark"] 中的顏色變數
+  - 目標：打造更嚴謹、保守、專業的學術閱讀外觀
+  - 主要改動：
+    1. 加深淺色模式的基礎文字顏色 (text-color)，提高對比度。
+    2. 提亮深色模式的基礎文字顏色 (text-color)，同樣提高對比度。
+    3. 將連結 (primary) 顏色調整為更沉穩的藍色。
+*/
+
 :root {
-    --primary-color: #3b82f6;
-    --primary-hover: #2563eb;
-    --bg-color: #f9fafb;
-    --text-color: #1f2937;
+    /* -- 基礎連結色 (更沉穩的藍色) -- */
+    --primary-color: #2563eb; /* 原: #3b82f6 (blue-500) -> blue-600 */
+    --primary-hover: #1d4ed8; /* 原: #2563eb (blue-600) -> blue-700 */
+    
+    /* -- 基礎背景與文字 (更高對比) -- */
+    --bg-color: #f9fafb; /* (不變) */
+    --text-color: #111827; /* 原: #1f2937 (gray-800) -> gray-900 (更黑, 更清晰) */
+    
+    /* -- 介面元素 (不變) -- */
     --border-color: #e5e7eb;
     --header-bg: #f3f4f6;
     --card-bg: #ffffff;
-    --code-bg: #f8fafc;
-    --danger-color: #ef4444;
+    
+    /* -- 程式碼區塊 (更清晰) -- */
+    --code-bg: #f3f4f6; /* 原: #f8fafc -> gray-100 (更一致) */
+    
     --inline-code-bg: #f7fafc;
     --inline-code-color: #e53e3e;
+    
+    /* -- 通知 (語意顏色，保持不變) -- */
+    --danger-color: #ef4444;
     --success-color: #10b981;
     --notification-bg: rgba(16, 185, 129, 0.1);
     --notification-error-bg: rgba(239, 68, 68, 0.1);
@@ -17,17 +37,27 @@
 }
 
 [data-theme="dark"] {
-    --primary-color: #60a5fa;
-    --primary-hover: #3b82f6;
-    --bg-color: #0f172a;
-    --text-color: #e2e8f0;
-    --border-color: #334155;
-    --header-bg: #1e293b;
-    --card-bg: #1e293b;
+    /* -- 基礎連結色 (保持清晰的亮藍色) -- */
+    --primary-color: #60a5fa; /* (不變) blue-400 */
+    --primary-hover: #93c5fd; /* 原: #3b82f6 (blue-500) -> blue-300 (更亮的 hover) */
+    
+    /* -- 基礎背景與文字 (更高對比) -- */
+    --bg-color: #0f172a; /* (不變) slate-900 */
+    --text-color: #f3f4f6; /* 原: #e2e8f0 (slate-200) -> gray-100 (更亮) */
+    
+    /* -- 介面元素 (不變) -- */
+    --border-color: #334155; /* slate-700 */
+    --header-bg: #1e293b; /* slate-800 */
+    --card-bg: #1e293b; /* slate-800 */
+    
+    /* -- 程式碼區塊 (不變) -- */
     --code-bg: #0d1117;
-    --danger-color: #f87171;
+    
     --inline-code-bg: #161b22;
     --inline-code-color: #ff7b72;
+    
+    /* -- 通知 (語意顏色，保持不變) -- */
+    --danger-color: #f87171;
     --success-color: #34d399;
     --notification-bg: rgba(52, 211, 153, 0.1);
     --notification-error-bg: rgba(248, 113, 113, 0.1);
@@ -372,6 +402,14 @@ h1 {
     transition: color 0.3s ease;
 }
 
+/* 【使用者要求】 增加段落間距 */
+/* mathpix 庫將每個塊 (段落, 公式等) 包裹在一個 <div> 中 */
+/* 我們為這些 <div> 添加底邊距，以創建舒適的段落間距 */
+#output > div,
+.fullscreen-content > div {
+    margin-bottom: 1.75rem; /* 這是新的段落間距 */
+}
+
 #output h1,
 .fullscreen-content h1 {
     font-size: 2.5rem;
@@ -444,7 +482,8 @@ h1 {
 
 #output p,
 .fullscreen-content p {
-    margin: 1.5rem 0;
+    /* 【使用者要求】 移除 <p> 標籤的垂直邊距，交由父層 <div> 控制 */
+    margin: 0;
     line-height: 1.8;
     text-align: justify;
     text-justify: inter-word;
@@ -458,7 +497,8 @@ h1 {
 .fullscreen-content h2+p,
 #output h3+p,
 .fullscreen-content h3+p {
-    margin-top: 0.75rem;
+    /* 【使用者要求】 由於 <p> 邊距已移除，這裡的 margin-top 變得不必要 */
+    /* margin-top: 0.75rem; */
 }
 
 #output ul,
@@ -479,7 +519,8 @@ h1 {
 
 #output li p,
 .fullscreen-content li p {
-    margin: 0.5rem 0;
+    /* 【使用者要求】 列表中的 <p> 標籤也移除邊距，保持一致 */
+    margin: 0;
 }
 
 #output blockquote,
@@ -527,8 +568,8 @@ h1 {
 
 [data-theme="dark"] #output pre,
 [data-theme="dark"] .fullscreen-content pre {
-    background: #0d1117;
-    color: #e6edf3;
+    background: var(--code-bg); /* 【優化】使用變數 */
+    color: var(--text-color); /* 【優化】使用變數 */
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     border-color: #30363d;
 }
@@ -610,13 +651,14 @@ h1 {
 .fullscreen-content .MathJax,
 #output mjx-container,
 .fullscreen-content mjx-container {
-    margin: 2rem 0 !important;
+    /* 【使用者要求】 移除公式容器的邊距，讓父 <div> 控制 */
+    margin: 0 !important;
     font-size: 1.2em !important;
 }
 
 #output mjx-container[display="true"],
 .fullscreen-content mjx-container[display="true"] {
-    margin: 2.5rem 0 !important;
+    margin: 0 !important; /* 同上 */
     text-align: center;
 }
 
