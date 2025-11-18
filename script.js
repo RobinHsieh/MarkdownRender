@@ -6,6 +6,8 @@
 let currentScrollSpyHeadings = [];
 let currentScrollSpyContainer = null;
 let tocPanel = null;
+// 【新功能】Tooltip 元素
+let tocTooltip = null;
 
 
 // ============================================
@@ -485,6 +487,10 @@ function generateTOC(contentSelector) {
     if (!tocPanel) {
         tocPanel = document.getElementById('toc-panel');
     }
+    // 【新功能】取得 tooltip 元素
+    if (!tocTooltip) {
+        tocTooltip = document.getElementById('toc-tooltip');
+    }
     
     const content = document.querySelector(contentSelector);
     if (!content || !tocPanel) return;
@@ -502,39 +508,57 @@ function generateTOC(contentSelector) {
         return;
     }
 
-    // 4. 顯示 TOC 並加入標題
-    tocPanel.style.display = 'block';
-    const tocTitle = document.createElement('div');
-    tocTitle.className = 'toc-title';
-    tocTitle.textContent = '文件大綱';
-    tocPanel.appendChild(tocTitle);
+    // 4. 顯示 TOC
+    tocPanel.style.display = 'flex';
 
     // 5. 建立每個連結
     headings.forEach((heading, index) => {
-        // 建立唯一的 ID
         let id = 'toc-' + (heading.textContent || '').trim().toLowerCase()
                          .replace(/\s+/g, '-')
                          .replace(/[^\w-]+/g, '') + '-' + index;
         heading.id = id;
 
-        // 建立連結元素
         const link = document.createElement('a');
         link.className = 'toc-link toc-' + heading.tagName.toLowerCase();
         link.textContent = heading.textContent;
         link.href = '#' + id;
-        link.dataset.headingId = id; // 用於捲動偵測
+        link.dataset.headingId = id;
 
-        // 點擊時平滑捲動到標題
+        // 點擊時平滑捲動
         link.onclick = (e) => {
             e.preventDefault();
             heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
         
+        // 【新功能】Toolip 互動事件
+        if (tocTooltip) {
+            link.addEventListener('mouseenter', () => {
+                // 設定文字
+                tocTooltip.textContent = heading.textContent;
+                
+                // 計算位置：連結的右側 + 一點間距
+                const rect = link.getBoundingClientRect();
+                
+                // Tooltip 垂直置中對齊連結
+                // 因為 CSS 中有 transform: translateY(-50%)，所以這裡設為連結的中心點即可
+                const centerY = rect.top + (rect.height / 2);
+                
+                tocTooltip.style.top = centerY + 'px';
+                tocTooltip.style.left = (rect.right + 12) + 'px'; // 連結右方 12px
+                
+                tocTooltip.classList.add('visible');
+            });
+
+            link.addEventListener('mouseleave', () => {
+                tocTooltip.classList.remove('visible');
+            });
+        }
+        
         tocPanel.appendChild(link);
     });
 
-    // 6. 快取標題以供捲動偵測使用
-    currentScrollSpyHeadings = Array.from(headings); // 轉換為陣列
+    // 6. 快取標題
+    currentScrollSpyHeadings = Array.from(headings);
     currentScrollSpyContainer = content;
 }
 

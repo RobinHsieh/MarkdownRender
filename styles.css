@@ -1,68 +1,73 @@
 /*
   【專業配色優化】
-  - 調整 :root 和 [data-theme="dark"] 中的顏色變數
-  - 目標：打造更嚴謹、保守、專業的學術閱讀外觀
-  - 主要改動：
-    1. 加深淺色模式的基礎文字顏色 (text-color)，提高對比度。
-    2. 提亮深色模式的基礎文字顏色 (text-color)，同樣提高對比度。
-    3. 將連結 (primary) 顏色調整為更沉穩的藍色。
-    4. 【重要】將行內程式碼 (inline-code) 的刺眼紅色改為專業、內斂的紫色系。
 */
 
 :root {
     /* -- 基礎連結色 (更沉穩的藍色) -- */
-    --primary-color: #2563eb; /* 原: #3b82f6 (blue-500) -> blue-600 */
-    --primary-hover: #1d4ed8; /* 原: #2563eb (blue-600) -> blue-700 */
+    --primary-color: #2563eb;
+    --primary-hover: #1d4ed8;
     
     /* -- 基礎背景與文字 (更高對比) -- */
-    --bg-color: #f9fafb; /* (不變) */
-    --text-color: #111827; /* 原: #1f2937 (gray-800) -> gray-900 (更黑, 更清晰) */
+    --bg-color: #f9fafb;
+    --text-color: #111827;
     
-    /* -- 介面元素 (不變) -- */
+    /* -- 介面元素 -- */
     --border-color: #e5e7eb;
     --header-bg: #f3f4f6;
     --card-bg: #ffffff;
     
-    /* -- 程式碼區塊 (更清晰) -- */
-    --code-bg: #f3f4f6; /* 原: #f8fafc -> gray-100 (更一致) */
+    /* -- 程式碼區塊 -- */
+    --code-bg: #f3f4f6;
     
     --inline-code-bg: #f7fafc;
     --inline-code-color: #e53e3e;
     
-    /* -- 通知 (語意顏色，保持不變) -- */
+    /* -- 通用 -- */
     --danger-color: #ef4444;
     --success-color: #10b981;
     --notification-bg: rgba(16, 185, 129, 0.1);
     --notification-error-bg: rgba(239, 68, 68, 0.1);
     --notification-info-bg: rgba(59, 130, 246, 0.1);
+
+    /* -- Minimap TOC 顏色 -- */
+    --toc-bar-bg: rgba(0, 0, 0, 0.15);
+    --toc-bar-hover: rgba(0, 0, 0, 0.4);
+    --toc-tooltip-bg: #1f2937;
+    --toc-tooltip-text: #ffffff;
 }
 
 [data-theme="dark"] {
-    /* -- 基礎連結色 (保持清晰的亮藍色) -- */
-    --primary-color: #60a5fa; /* (不變) blue-400 */
-    --primary-hover: #93c5fd; /* 原: #3b82f6 (blue-500) -> blue-300 (更亮的 hover) */
+    /* -- 基礎連結色 -- */
+    --primary-color: #60a5fa;
+    --primary-hover: #93c5fd;
     
-    /* -- 基礎背景與文字 (更高對比) -- */
-    --bg-color: #0f172a; /* (不變) slate-900 */
-    --text-color: #f3f4f6; /* 原: #e2e8f0 (slate-200) -> gray-100 (更亮) */
+    /* -- 基礎背景與文字 -- */
+    --bg-color: #0f172a;
+    --text-color: #f3f4f6;
     
-    /* -- 介面元素 (不變) -- */
-    --border-color: #334155; /* slate-700 */
-    --header-bg: #1e293b; /* slate-800 */
-    --card-bg: #1e293b; /* slate-800 */
+    /* -- 介面元素 -- */
+    --border-color: #334155;
+    --header-bg: #1e293b;
+    --card-bg: #1e293b;
     
-    /* -- 程式碼區塊 (不變) -- */
+    /* -- 程式碼區塊 -- */
     --code-bg: #0d1117;
     
     --inline-code-bg: #161b22;
     --inline-code-color: #ff7b72;
     
-    /* -- 通知 (語意顏色，保持不變) -- */
+    /* -- 通用 -- */
     --danger-color: #f87171;
     --success-color: #34d399;
     --notification-bg: rgba(52, 211, 153, 0.1);
     --notification-error-bg: rgba(248, 113, 113, 0.1);
     --notification-info-bg: rgba(96, 165, 250, 0.1);
+
+    /* -- Minimap TOC 顏色 (暗色模式) -- */
+    --toc-bar-bg: rgba(255, 255, 255, 0.2);
+    --toc-bar-hover: rgba(255, 255, 255, 0.6);
+    --toc-tooltip-bg: #e5e7eb;
+    --toc-tooltip-text: #111827;
 }
 
 * {
@@ -80,109 +85,139 @@ body {
     transition: color 0.3s ease, background-color 0.3s ease;
 }
 
-/* 【新功能】閱讀進度條 */
+/* 閱讀進度條 */
 #reading-progress-bar {
     position: fixed;
     top: 0;
     left: 0;
     height: 4px;
     background: var(--primary-color);
-    width: 0%; /* 由 JS 控制 */
+    width: 0%;
     z-index: 2000;
     transition: width 0.1s linear, background-color 0.3s ease;
 }
 
-/* 【新功能】TOC 導航面板 (GDocs 樣式) */
+/* 【Minimap TOC 核心樣式】 */
+
 #toc-panel {
+    /* 固定定位 */
     position: fixed;
-    top: 100px;
-    left: 2rem;
-    width: 160px;
-    max-height: calc(100vh - 140px);
-    overflow-y: auto;
-    background: var(--card-bg);
-    border: 1px solid var(--border-color);
-    /* 【GDocs 樣式】更精緻的圓角和陰影 */
-    border-radius: 6px; 
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-    padding: 0.75rem; /* 減少內邊距 */
-    display: none; /* 由 JS 控制顯示 */
-    transition: all 0.3s ease;
-    z-index: 100;
+    /* 垂直置中偏上 */
+    top: 50%; 
+    transform: translateY(-50%);
+    
+    /* 【關鍵定位邏輯】 
+      計算：螢幕中心點 (50%) 減去 內容寬度的一半 (550px) 再減去 間距 (80px)
+    */
+    left: calc(50% - 550px - 80px);
+    
+    width: 60px; /* 限制寬度 */
+    max-height: 80vh;
+    overflow-y: auto; /* 允許捲動 */
+    /* 隱藏捲動軸但保留功能 (Firefox) */
+    scrollbar-width: none; 
+    
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    padding: 0;
+    
+    display: none; /* JS 控制顯示 */
+    flex-direction: column;
+    gap: 6px; /* 線條間距 */
+    z-index: 1010;
 }
 
-[data-theme="dark"] #toc-panel {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+/* 隱藏捲動軸 (Chrome/Safari) */
+#toc-panel::-webkit-scrollbar {
+    display: none;
 }
 
 .toc-title {
-    font-size: 10px; /* 稍小 */
-    font-weight: 500; /* 不需太粗 */
-    margin-bottom: 0.5rem;
-    padding: 0.25rem 0.5rem 0.5rem 0.5rem;
-    border-bottom: 1px solid var(--border-color);
-    color: var(--text-color);
+    display: none;
 }
 
+/* TOC 連結樣式 (變成線條) */
 .toc-link {
     display: block;
-    padding: 0.35rem 0.5rem; /* 調整內邊距 */
-    border-radius: 4px;
-    text-decoration: none;
-    /* 【GDocs 樣式】預設文字為灰色，降低干擾 */
-    color: #6b7280; 
-    font-size: 8px;
-    line-height: 1.5;
+    height: 4px; /* 線條高度 */
+    border-radius: 2px;
+    background-color: var(--toc-bar-bg);
+    cursor: pointer;
     transition: all 0.2s ease;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    
+    /* 隱藏文字 */
+    font-size: 0;
+    color: transparent;
+    text-decoration: none;
+    padding: 0;
+    margin: 0;
+    
+    position: relative; 
 }
 
-[data-theme="dark"] .toc-link {
-    color: #9ca3af;
-}
+/* 不同層級的長度設計 */
+.toc-h1 { width: 100%; }
+.toc-h2 { width: 70%; }
+.toc-h3 { width: 40%; }
 
+/* Hover 效果 */
 .toc-link:hover {
-    background-color: var(--header-bg);
-    color: var(--text-color); /* 懸停時恢復正常文字顏色 */
+    background-color: var(--toc-bar-hover);
 }
 
-/* 【GDocs 樣式】H1 連結使用正常文字顏色 */
-.toc-h1 {
-    font-weight: 500;
-    color: var(--text-color);
-}
-
-[data-theme="dark"] .toc-h1 {
-    color: var(--text-color);
-}
-
-
-.toc-h2 {
-    padding-left: 1rem;
-}
-
-.toc-h3 {
-    padding-left: 1.25rem;
-    font-size: 7px;
-    /* 預設顏色繼承 .toc-link (灰色) */
-}
-
-/* 【GDocs 樣式 - 核心】
-  Active 狀態不再使用實心背景，
-  而是改為「藍色 + 粗體」文字
-*/
+/* Active 狀態 */
 .toc-link.active {
-    background-color: transparent;
-    color: var(--primary-color);
-    font-weight: 600;
+    background-color: var(--primary-color);
 }
 
-.toc-link.active.toc-h3 {
-    color: var(--primary-color); /* 確保 H3 也能變藍 */
+/* 【Tooltip 新樣式】 
+   這是獨立的元素，不再是偽元素，解決 overflow 被切掉的問題
+*/
+#toc-tooltip {
+    position: fixed; /* 固定在視窗上 */
+    
+    background-color: var(--toc-tooltip-bg);
+    color: var(--toc-tooltip-text);
+    font-size: 12px;
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 6px 10px;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    
+    /* 不擋住滑鼠操作 */
+    pointer-events: none; 
+    
+    z-index: 2020; /* 確保在最上層 */
+    
+    /* 預設隱藏 */
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-50%); /* 垂直置中對齊線條 */
+    transition: opacity 0.15s ease, visibility 0.15s ease;
 }
 
+#toc-tooltip.visible {
+    opacity: 1;
+    visibility: visible;
+}
+
+
+/* 【響應式調整】 */
+@media (max-width: 1300px) {
+    #toc-panel {
+        display: none !important;
+    }
+    /* 隱藏 tooltip 避免殘留 */
+    #toc-tooltip {
+        display: none !important;
+    }
+}
+
+
+/* --- 以下為原有樣式 (大部分保持不變) --- */
 
 #frame {
     max-width: 1024px;
@@ -345,7 +380,6 @@ h1 {
     display: none;
     background-color: var(--card-bg);
     transition: background-color 0.3s ease;
-    /* 【新功能】為捲動偵測增加平滑捲動 */
     scroll-behavior: smooth;
 }
 
@@ -509,12 +543,9 @@ h1 {
     transition: color 0.3s ease;
 }
 
-/* 【使用者要求】 增加段落間距 */
-/* mathpix 庫將每個塊 (段落, 公式等) 包裹在一個 <div> 中 */
-/* 我們為這些 <div> 添加底邊距，以創建舒適的段落間距 */
 #output > div,
 .fullscreen-content > div {
-    margin-bottom: 1.75rem; /* 這是新的段落間距 */
+    margin-bottom: 1.75rem;
 }
 
 #output h1,
@@ -589,23 +620,12 @@ h1 {
 
 #output p,
 .fullscreen-content p {
-    /* 【使用者要求】 移除 <p> 標籤的垂直邊距，交由父層 <div> 控制 */
     margin: 0;
     line-height: 1.8;
     text-align: justify;
     text-justify: inter-word;
     color: var(--text-color);
     transition: color 0.3s ease;
-}
-
-#output h1+p,
-.fullscreen-content h1+p,
-#output h2+p,
-.fullscreen-content h2+p,
-#output h3+p,
-.fullscreen-content h3+p {
-    /* 【使用者要求】 由於 <p> 邊距已移除，這裡的 margin-top 變得不必要 */
-    /* margin-top: 0.75rem; */
 }
 
 #output ul,
@@ -626,7 +646,6 @@ h1 {
 
 #output li p,
 .fullscreen-content li p {
-    /* 【使用者要求】 列表中的 <p> 標籤也移除邊距，保持一致 */
     margin: 0;
 }
 
@@ -675,8 +694,8 @@ h1 {
 
 [data-theme="dark"] #output pre,
 [data-theme="dark"] .fullscreen-content pre {
-    background: var(--code-bg); /* 【優化】使用變數 */
-    color: var(--text-color); /* 【優化】使用變數 */
+    background: var(--code-bg);
+    color: var(--text-color);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
     border-color: #30363d;
 }
@@ -758,14 +777,13 @@ h1 {
 .fullscreen-content .MathJax,
 #output mjx-container,
 .fullscreen-content mjx-container {
-    /* 【使用者要求】 移除公式容器的邊距，讓父 <div> 控制 */
     margin: 0 !important;
     font-size: 1.2em !important;
 }
 
 #output mjx-container[display="true"],
 .fullscreen-content mjx-container[display="true"] {
-    margin: 0 !important; /* 同上 */
+    margin: 0 !important;
     text-align: center;
 }
 
@@ -775,16 +793,11 @@ h1 {
     display: inline-block !important;
 }
 
-/* 【使用者要求 - 精準修復 v2】
-   只為 *包含* <br> 標籤的 <div> 增加 line-height
-   - 使用 :has() 偽類選擇器
-   - 同時選取 #output 的直接子 <div> 和 li 內的 <div>
-*/
 #output > div:has(br),
 .fullscreen-content > div:has(br),
 #output li > div:has(br),
 .fullscreen-content li > div:has(br) {
-    line-height: 2.4; /* 你可以試著調整 2.0, 2.2, 2.5 看看效果 */
+    line-height: 2.4;
 }
 
 #output table,
@@ -831,8 +844,6 @@ h1 {
     background: var(--card-bg);
     z-index: 1000;
     display: none;
-    /* 【優化】: 移除 flex-direction，因為 header 不再是 flex item */
-    /* flex-direction: column; */
     transition: background 0.3s ease;
 }
 
@@ -840,65 +851,48 @@ h1 {
     display: flex;
 }
 
-/* 【優化】: 隱藏固定的 header */
 .fullscreen-header {
-    display: none; /* 完全隱藏 */
+    display: none;
 }
 
-/* 【優化】: 退出按鈕的新樣式 */
 #exit-fullscreen-btn {
-    position: fixed; /* 固定在視窗上 */
+    position: fixed;
     top: 1.5rem;
     right: 2rem;
-    z-index: 1020; /* 確保在最上層 */
+    z-index: 1020;
     
-    /* 變更為圓形按鈕 */
     border-radius: 50%;
-    padding: 0.75rem; /* 調整 padding 使其變圓 */
-    width: 50px; /* 設置固定寬高 */
+    padding: 0.75rem;
+    width: 50px;
     height: 50px;
     
-    /* 移除文字 */
     font-size: 0;
     gap: 0;
 
-    /* 增加陰影 */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 
-    /* 預設半透明，滑過時才完全顯示 */
     opacity: 0.7;
     transition: all 0.3s ease;
 }
 
 #exit-fullscreen-btn:hover {
     opacity: 1;
-    transform: scale(1.05); /* 輕微放大效果 */
+    transform: scale(1.05);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 #exit-fullscreen-btn svg {
-    width: 24px; /* 放大圖示 */
+    width: 24px;
     height: 24px;
 }
-
 
 .fullscreen-content {
     flex: 1;
     padding: 3rem;
     overflow-y: auto;
     background: var(--card-bg);
-    /* 【新功能】為捲動偵測增加平滑捲動 */
     scroll-behavior: smooth;
 }
-
-/* Mobile responsiveness */
-@media (max-width: 1200px) { /* 調整斷點以隱藏 TOC */
-    /* 【新功能】在較窄的螢幕上隱藏 TOC 面板 */
-    #toc-panel {
-        display: none !important; /* 強制隱藏 */
-    }
-}
-
 
 @media (max-width: 768px) {
     #frame {
@@ -949,7 +943,6 @@ h1 {
         font-size: 1.5rem;
     }
 
-    /* 【優化】: 調整手機上的退出按鈕位置 */
     #exit-fullscreen-btn {
         top: 1rem;
         right: 1rem;
@@ -975,12 +968,11 @@ h1 {
     }
 }
 
-/* Print styles */
 @media print {
-    /* 【新功能】列印時隱藏新 UI */
     #reading-progress-bar,
     #toc-panel,
-    #exit-fullscreen-btn {
+    #exit-fullscreen-btn,
+    #toc-tooltip {
         display: none !important;
     }
 
