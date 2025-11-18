@@ -6,6 +6,7 @@
     1. 加深淺色模式的基礎文字顏色 (text-color)，提高對比度。
     2. 提亮深色模式的基礎文字顏色 (text-color)，同樣提高對比度。
     3. 將連結 (primary) 顏色調整為更沉穩的藍色。
+    4. 【重要】將行內程式碼 (inline-code) 的刺眼紅色改為專業、內斂的紫色系。
 */
 
 :root {
@@ -78,6 +79,110 @@ body {
     padding: 1rem;
     transition: color 0.3s ease, background-color 0.3s ease;
 }
+
+/* 【新功能】閱讀進度條 */
+#reading-progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 4px;
+    background: var(--primary-color);
+    width: 0%; /* 由 JS 控制 */
+    z-index: 2000;
+    transition: width 0.1s linear, background-color 0.3s ease;
+}
+
+/* 【新功能】TOC 導航面板 (GDocs 樣式) */
+#toc-panel {
+    position: fixed;
+    top: 100px;
+    left: 2rem;
+    width: 160px;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    /* 【GDocs 樣式】更精緻的圓角和陰影 */
+    border-radius: 6px; 
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    padding: 0.75rem; /* 減少內邊距 */
+    display: none; /* 由 JS 控制顯示 */
+    transition: all 0.3s ease;
+    z-index: 100;
+}
+
+[data-theme="dark"] #toc-panel {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.toc-title {
+    font-size: 10px; /* 稍小 */
+    font-weight: 500; /* 不需太粗 */
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0.5rem 0.5rem 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-color);
+}
+
+.toc-link {
+    display: block;
+    padding: 0.35rem 0.5rem; /* 調整內邊距 */
+    border-radius: 4px;
+    text-decoration: none;
+    /* 【GDocs 樣式】預設文字為灰色，降低干擾 */
+    color: #6b7280; 
+    font-size: 8px;
+    line-height: 1.5;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+[data-theme="dark"] .toc-link {
+    color: #9ca3af;
+}
+
+.toc-link:hover {
+    background-color: var(--header-bg);
+    color: var(--text-color); /* 懸停時恢復正常文字顏色 */
+}
+
+/* 【GDocs 樣式】H1 連結使用正常文字顏色 */
+.toc-h1 {
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+[data-theme="dark"] .toc-h1 {
+    color: var(--text-color);
+}
+
+
+.toc-h2 {
+    padding-left: 1rem;
+}
+
+.toc-h3 {
+    padding-left: 1.25rem;
+    font-size: 7px;
+    /* 預設顏色繼承 .toc-link (灰色) */
+}
+
+/* 【GDocs 樣式 - 核心】
+  Active 狀態不再使用實心背景，
+  而是改為「藍色 + 粗體」文字
+*/
+.toc-link.active {
+    background-color: transparent;
+    color: var(--primary-color);
+    font-weight: 600;
+}
+
+.toc-link.active.toc-h3 {
+    color: var(--primary-color); /* 確保 H3 也能變藍 */
+}
+
 
 #frame {
     max-width: 1024px;
@@ -240,6 +345,8 @@ h1 {
     display: none;
     background-color: var(--card-bg);
     transition: background-color 0.3s ease;
+    /* 【新功能】為捲動偵測增加平滑捲動 */
+    scroll-behavior: smooth;
 }
 
 #source {
@@ -738,32 +845,6 @@ h1 {
     display: none; /* 完全隱藏 */
 }
 
-/*
-.fullscreen-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1rem 2rem;
-    background: var(--header-bg);
-    border-bottom: 1px solid var(--border-color);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    flex-shrink: 0;
-    transition: all 0.3s ease;
-}
-
-[data-theme="dark"] .fullscreen-header {
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.fullscreen-header h2 {
-    margin: 0;
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: var(--text-color);
-    transition: color 0.3s ease;
-}
-*/
-
 /* 【優化】: 退出按鈕的新樣式 */
 #exit-fullscreen-btn {
     position: fixed; /* 固定在視窗上 */
@@ -806,9 +887,19 @@ h1 {
     padding: 3rem;
     overflow-y: auto;
     background: var(--card-bg);
+    /* 【新功能】為捲動偵測增加平滑捲動 */
+    scroll-behavior: smooth;
 }
 
 /* Mobile responsiveness */
+@media (max-width: 1200px) { /* 調整斷點以隱藏 TOC */
+    /* 【新功能】在較窄的螢幕上隱藏 TOC 面板 */
+    #toc-panel {
+        display: none !important; /* 強制隱藏 */
+    }
+}
+
+
 @media (max-width: 768px) {
     #frame {
         border-radius: 0;
@@ -872,15 +963,6 @@ h1 {
         height: 20px;
     }
 
-
-    /*
-    .fullscreen-header {
-        flex-direction: column;
-        gap: 1rem;
-        padding: 1rem;
-    }
-    */
-
     .fullscreen-content {
         padding: 1.5rem;
     }
@@ -895,6 +977,13 @@ h1 {
 
 /* Print styles */
 @media print {
+    /* 【新功能】列印時隱藏新 UI */
+    #reading-progress-bar,
+    #toc-panel,
+    #exit-fullscreen-btn {
+        display: none !important;
+    }
+
     #output,
     .fullscreen-content {
         font-size: 12pt;
