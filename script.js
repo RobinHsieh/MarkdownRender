@@ -134,7 +134,6 @@ function slugify(text) {
 
 /**
  * 修正內部錨點連結的行為
- * 【修復】回退使用 scrollIntoView，與 TOC 行為一致，解決 scrollTop 報錯問題
  * @param {HTMLElement} container - 包含連結的容器元素
  */
 function fixInternalLinks(container) {
@@ -159,9 +158,20 @@ function fixInternalLinks(container) {
 
                 // 1. 嘗試尋找精確 ID
                 const targetId = decodeURIComponent(href.substring(1));
-                let targetElement = document.getElementById(targetId);
+                
+                // 【關鍵修復】
+                // 不使用 document.getElementById(targetId)，因為它會搜尋整個 DOM
+                // 改用 container.querySelector 並配合 CSS.escape 來處理數字開頭的 ID
+                // 這樣可以確保我們只在當前容器（例如全螢幕容器）內尋找目標
+                let targetElement = null;
+                try {
+                    targetElement = container.querySelector(`#${CSS.escape(targetId)}`);
+                } catch (qsError) {
+                    // 萬一 CSS.escape 失敗或選擇器錯誤，保持 null 進入模糊匹配
+                    console.warn('QuerySelector failed for ID:', targetId, qsError);
+                }
 
-                // 2. 模糊匹配 (保持這部分邏輯，因為它能解決 ID 不對應的問題)
+                // 2. 模糊匹配 (Fallback)
                 if (!targetElement) {
                     const headings = container.querySelectorAll('h1, h2, h3, h4, h5, h6');
                     const cleanTarget = targetId.replace(/-/g, '').toLowerCase();
@@ -185,15 +195,12 @@ function fixInternalLinks(container) {
                 }
 
                 if (targetElement) {
-                    // 【關鍵修復】
-                    // 放棄手動計算 offset (該方法導致了 reading 'scrollTop' of null 錯誤)
-                    // 改用與 TOC 完全一致的 scrollIntoView
                     targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
                     // 更新 URL hash
                     history.replaceState(null, null, '#' + targetId);
                 } else {
-                    console.warn(`Target element with id "${targetId}" not found.`);
+                    console.warn(`Target element with id "${targetId}" not found in container.`);
                 }
             } catch (err) {
                 console.error('Error handling link click:', err);
@@ -486,7 +493,6 @@ function updateThemeToggle(theme) {
 // ============================================
 
 function handleScrollEvents(event) {
-    // 【關鍵修復】包裹 try-catch 防止外部庫錯誤影響
     try {
         updateReadingProgress(event);
         updateScrollSpy(event);
@@ -496,11 +502,9 @@ function handleScrollEvents(event) {
 }
 
 function updateReadingProgress(event) {
-    // 【關鍵修復】包裹 try-catch，防止意外錯誤
     try {
         const target = event ? event.target : null;
         
-        // 確保 target 存在，且是元素節點 (nodeType === 1)，且具有 scrollTop 屬性
         if (!target || target.nodeType !== 1 || typeof target.scrollTop === 'undefined') {
             return;
         }
@@ -515,7 +519,6 @@ function updateReadingProgress(event) {
             progressBar.style.width = progress + '%';
         }
     } catch (e) {
-        // 靜默失敗，不影響主功能
     }
 }
 
@@ -548,19 +551,22 @@ function generateTOC(contentSelector) {
     tocPanel.style.display = 'flex';
 
     headings.forEach((heading, index) => {
-        // 1. 計算標準 Slug ID (VSCode 風格)
+        // 1. 計算標準 Slug ID
         let safeId = slugify(heading.textContent);
         
-        // 2. 檢查全域唯一性，避免重複
+        // 2. 檢查容器內唯一性 (Scoped Uniqueness)
+        // 【關鍵修復】只檢查 content 內，而不使用 document.getElementById
+        // 這允許全螢幕容器使用與主容器相同的 ID，解決連結重新命名的問題
         let uniqueId = safeId;
         let counter = 1;
         
-        while (document.getElementById(uniqueId) && document.getElementById(uniqueId) !== heading) {
+        // 使用 content.querySelector 而非 document.getElementById
+        while (content.querySelector('#' + CSS.escape(uniqueId)) && content.querySelector('#' + CSS.escape(uniqueId)) !== heading) {
             uniqueId = `${safeId}-${counter}`;
             counter++;
         }
         
-        // 3. 強制賦予 ID 或保留 data-slug 供查找
+        // 3. 強制賦予 ID
         if (!heading.id) {
             heading.id = uniqueId;
         } else {
@@ -577,8 +583,6 @@ function generateTOC(contentSelector) {
 
         link.onclick = (e) => {
             e.preventDefault();
-            // TOC 點擊也可以使用我們的新手動捲動邏輯，這裡為了簡單保持 scrollIntoView，
-            // 但因為 TOC 是自己生成的，ID 肯定是正確的，比較不會出錯。
             heading.scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
         
