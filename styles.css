@@ -141,8 +141,8 @@ body {
 /* TOC 連結樣式 (變成線條) */
 .toc-link {
     display: block;
-    height: 4px; /* 線條高度 */
-    border-radius: 2px;
+    height: 6px; /* 線條高度 */
+    border-radius: 6px;
     background-color: var(--toc-bar-bg);
     cursor: pointer;
     transition: all 0.2s ease;
@@ -164,11 +164,13 @@ body {
 
 /* Hover 效果 */
 .toc-link:hover {
+    height: 12px; /* 線條高度 */
     background-color: var(--toc-bar-hover);
 }
 
 /* Active 狀態 */
 .toc-link.active {
+    height: 12px; /* 線條高度 */
     background-color: var(--primary-color);
 }
 
