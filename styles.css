@@ -1,27 +1,27 @@
 /*
-  【專業配色優化】
+  【專業配色優化】 - Original GitHub Styles
 */
 
 :root {
     /* -- 基礎連結色 (更沉穩的藍色) -- */
     --primary-color: #2563eb;
     --primary-hover: #1d4ed8;
-    
+
     /* -- 基礎背景與文字 (更高對比) -- */
     --bg-color: #f9fafb;
     --text-color: #111827;
-    
+
     /* -- 介面元素 -- */
     --border-color: #e5e7eb;
     --header-bg: #f3f4f6;
     --card-bg: #ffffff;
-    
+
     /* -- 程式碼區塊 -- */
     --code-bg: #f3f4f6;
-    
+
     --inline-code-bg: #f7fafc;
     --inline-code-color: #e53e3e;
-    
+
     /* -- 通用 -- */
     --danger-color: #ef4444;
     --success-color: #10b981;
@@ -40,22 +40,22 @@
     /* -- 基礎連結色 -- */
     --primary-color: #60a5fa;
     --primary-hover: #93c5fd;
-    
+
     /* -- 基礎背景與文字 -- */
     --bg-color: #0f172a;
     --text-color: #f3f4f6;
-    
+
     /* -- 介面元素 -- */
     --border-color: #334155;
     --header-bg: #1e293b;
     --card-bg: #1e293b;
-    
+
     /* -- 程式碼區塊 -- */
     --code-bg: #0d1117;
-    
+
     --inline-code-bg: #161b22;
     --inline-code-color: #ff7b72;
-    
+
     /* -- 通用 -- */
     --danger-color: #f87171;
     --success-color: #34d399;
@@ -83,6 +83,9 @@ body {
     background-color: var(--bg-color);
     padding: 1rem;
     transition: color 0.3s ease, background-color 0.3s ease;
+    /* Ensure full height for drag overlay positioning */
+    min-height: 100vh;
+    position: relative;
 }
 
 /* 閱讀進度條 */
@@ -100,36 +103,25 @@ body {
 /* 【Minimap TOC 核心樣式】 */
 
 #toc-panel {
-    /* 固定定位 */
     position: fixed;
-    /* 垂直置中偏上 */
-    top: 50%; 
+    top: 50%;
     transform: translateY(-50%);
-    
-    /* 【關鍵定位邏輯】 
-      計算：螢幕中心點 (50%) 減去 內容寬度的一半 (550px) 再減去 間距 (80px)
-    */
-    left: calc(50% - 550px - 80px);
-    
-    width: 60px; /* 限制寬度 */
+    left: calc(50% - 650px - 30px);
+    width: 60px;
     max-height: 80vh;
-    overflow-y: auto; /* 允許捲動 */
-    /* 隱藏捲動軸但保留功能 (Firefox) */
-    scrollbar-width: none; 
-    
+    overflow-y: auto;
+    scrollbar-width: none;
     background: transparent;
     border: none;
     box-shadow: none;
     border-radius: 0;
     padding: 0;
-    
-    display: none; /* JS 控制顯示 */
+    display: none;
     flex-direction: column;
-    gap: 6px; /* 線條間距 */
+    gap: 6px;
     z-index: 1010;
 }
 
-/* 隱藏捲動軸 (Chrome/Safari) */
 #toc-panel::-webkit-scrollbar {
     display: none;
 }
@@ -138,48 +130,45 @@ body {
     display: none;
 }
 
-/* TOC 連結樣式 (變成線條) */
 .toc-link {
     display: block;
-    height: 6px; /* 線條高度 */
+    height: 6px;
     border-radius: 6px;
     background-color: var(--toc-bar-bg);
     cursor: pointer;
     transition: all 0.2s ease;
-    
-    /* 隱藏文字 */
     font-size: 0;
     color: transparent;
     text-decoration: none;
     padding: 0;
     margin: 0;
-    
-    position: relative; 
+    position: relative;
 }
 
-/* 不同層級的長度設計 */
-.toc-h1 { width: 100%; }
-.toc-h2 { width: 70%; }
-.toc-h3 { width: 40%; }
+.toc-h1 {
+    width: 100%;
+}
 
-/* Hover 效果 */
+.toc-h2 {
+    width: 70%;
+}
+
+.toc-h3 {
+    width: 40%;
+}
+
 .toc-link:hover {
-    height: 12px; /* 線條高度 */
+    height: 12px;
     background-color: var(--toc-bar-hover);
 }
 
-/* Active 狀態 */
 .toc-link.active {
-    height: 12px; /* 線條高度 */
+    height: 12px;
     background-color: var(--primary-color);
 }
 
-/* 【Tooltip 新樣式】 
-   這是獨立的元素，不再是偽元素，解決 overflow 被切掉的問題
-*/
 #toc-tooltip {
-    position: fixed; /* 固定在視窗上 */
-    
+    position: fixed;
     background-color: var(--toc-tooltip-bg);
     color: var(--toc-tooltip-text);
     font-size: 12px;
@@ -187,17 +176,12 @@ body {
     white-space: nowrap;
     padding: 6px 10px;
     border-radius: 4px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    
-    /* 不擋住滑鼠操作 */
-    pointer-events: none; 
-    
-    z-index: 2020; /* 確保在最上層 */
-    
-    /* 預設隱藏 */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    pointer-events: none;
+    z-index: 2020;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(-50%); /* 垂直置中對齊線條 */
+    transform: translateY(-50%);
     transition: opacity 0.15s ease, visibility 0.15s ease;
 }
 
@@ -206,23 +190,20 @@ body {
     visibility: visible;
 }
 
-
-/* 【響應式調整】 */
 @media (max-width: 1300px) {
     #toc-panel {
         display: none !important;
     }
-    /* 隱藏 tooltip 避免殘留 */
+
     #toc-tooltip {
         display: none !important;
     }
 }
 
-
-/* --- 以下為原有樣式 (大部分保持不變) --- */
+/* --- Main Interface Styles --- */
 
 #frame {
-    max-width: 1024px;
+    max-width: 1300px;
     margin: 0 auto;
     background-color: var(--card-bg);
     border-radius: 8px;
@@ -351,6 +332,8 @@ h1 {
     flex-direction: column;
     height: calc(100vh - 250px);
     min-height: 500px;
+    position: relative;
+    /* Needed for placeholder */
 }
 
 .tab-container {
@@ -402,6 +385,7 @@ h1 {
     display: block;
 }
 
+/* Notification Styles */
 .notification {
     padding: 1rem;
     margin: 1rem 0;
@@ -533,46 +517,51 @@ h1 {
     background-color: var(--bg-color);
 }
 
-/* Output and Fullscreen Content Typography */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Output and Fullscreen Typography */
 #output,
 .fullscreen-content {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
-    font-size: 18px;
+    font-size: 22px;
     line-height: 1.75;
     color: var(--text-color);
-    max-width: 1100px;
+    max-width: 1300px;
     margin: 0 auto;
     transition: color 0.3s ease;
 }
 
-#output > div,
-.fullscreen-content > div {
+#output>div,
+.fullscreen-content>div {
     margin-bottom: 1.75rem;
+}
+
+#output>div:has(br),
+.fullscreen-content>div:has(br),
+#output li>div:has(br),
+.fullscreen-content li>div:has(br) {
+    line-height: 2.4;
 }
 
 #output h1,
 .fullscreen-content h1 {
-    font-size: 2.5rem;
+    font-size: 3rem;
     font-weight: 700;
-    line-height: 1.2;
     margin: 3rem 0 1.5rem 0;
-    color: var(--text-color);
     border-bottom: 3px solid var(--primary-color);
     padding-bottom: 0.5rem;
-    letter-spacing: -0.02em;
-    transition: all 0.3s ease;
 }
 
 #output h2,
 .fullscreen-content h2 {
-    font-size: 2rem;
+    font-size: 2.45rem;
     font-weight: 600;
-    line-height: 1.3;
     margin: 2.5rem 0 1.25rem 0;
-    color: var(--text-color);
     position: relative;
     padding-left: 1rem;
-    transition: color 0.3s ease;
 }
 
 #output h2::before,
@@ -585,49 +574,26 @@ h1 {
     height: 1.2em;
     background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
     border-radius: 2px;
-    transition: background 0.3s ease;
 }
 
 #output h3,
 .fullscreen-content h3 {
-    font-size: 1.5rem;
+    font-size: 1.85rem;
     font-weight: 600;
-    line-height: 1.4;
     margin: 2rem 0 1rem 0;
-    color: var(--text-color);
-    transition: color 0.3s ease;
 }
 
 #output h4,
 .fullscreen-content h4 {
-    font-size: 1.25rem;
+    font-size: 1.55rem;
     font-weight: 600;
-    line-height: 1.4;
     margin: 1.75rem 0 0.75rem 0;
-    color: var(--text-color);
-    transition: color 0.3s ease;
-}
-
-#output h5,
-.fullscreen-content h5,
-#output h6,
-.fullscreen-content h6 {
-    font-size: 1.1rem;
-    font-weight: 600;
-    line-height: 1.4;
-    margin: 1.5rem 0 0.5rem 0;
-    color: var(--text-color);
-    transition: color 0.3s ease;
 }
 
 #output p,
 .fullscreen-content p {
     margin: 0;
-    line-height: 1.8;
     text-align: justify;
-    text-justify: inter-word;
-    color: var(--text-color);
-    transition: color 0.3s ease;
 }
 
 #output ul,
@@ -636,19 +602,6 @@ h1 {
 .fullscreen-content ol {
     margin: 1.5rem 0;
     padding-left: 2rem;
-    line-height: 1.8;
-}
-
-#output li,
-.fullscreen-content li {
-    margin: 0.75rem 0;
-    color: var(--text-color);
-    transition: color 0.3s ease;
-}
-
-#output li p,
-.fullscreen-content li p {
-    margin: 0;
 }
 
 #output blockquote,
@@ -659,11 +612,7 @@ h1 {
     border-left: 5px solid var(--primary-color);
     border-radius: 0 8px 8px 0;
     font-style: italic;
-    font-size: 1.05em;
-    line-height: 1.8;
     position: relative;
-    color: var(--text-color);
-    transition: all 0.3s ease;
 }
 
 #output blockquote::before,
@@ -675,7 +624,6 @@ h1 {
     top: -0.5rem;
     left: 0.5rem;
     font-family: Georgia, serif;
-    transition: color 0.3s ease;
 }
 
 #output pre,
@@ -683,23 +631,10 @@ h1 {
     margin: 2rem 0;
     padding: 1.5rem;
     background: var(--code-bg);
-    color: var(--text-color);
     border-radius: 8px;
     overflow-x: auto;
     font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
-    font-size: 0.9em;
-    line-height: 1.6;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     border: 1px solid var(--border-color);
-    transition: all 0.3s ease;
-}
-
-[data-theme="dark"] #output pre,
-[data-theme="dark"] .fullscreen-content pre {
-    background: var(--code-bg);
-    color: var(--text-color);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-    border-color: #30363d;
 }
 
 #output code,
@@ -711,7 +646,6 @@ h1 {
     border: 1px solid var(--border-color);
     border-radius: 4px;
     font-size: 0.9em;
-    transition: all 0.3s ease;
 }
 
 #output pre code,
@@ -720,20 +654,17 @@ h1 {
     color: inherit;
     padding: 0;
     border: none;
-    font-size: inherit;
 }
 
 #output a,
 .fullscreen-content a {
     color: var(--primary-color);
     text-decoration: none;
-    transition: color 0.3s ease;
 }
 
 #output a:hover,
 .fullscreen-content a:hover {
     text-decoration: underline;
-    color: var(--primary-hover);
 }
 
 #output hr,
@@ -746,20 +677,6 @@ h1 {
     transition: background 0.3s ease;
 }
 
-#output strong,
-.fullscreen-content strong {
-    font-weight: 700;
-    color: var(--text-color);
-    transition: color 0.3s ease;
-}
-
-#output em,
-.fullscreen-content em {
-    font-style: italic;
-    color: var(--text-color);
-    transition: color 0.3s ease;
-}
-
 #output img,
 .fullscreen-content img {
     max-width: 100%;
@@ -767,39 +684,6 @@ h1 {
     margin: 2rem 0;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    transition: box-shadow 0.3s ease;
-}
-
-[data-theme="dark"] #output img,
-[data-theme="dark"] .fullscreen-content img {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-}
-
-#output .MathJax,
-.fullscreen-content .MathJax,
-#output mjx-container,
-.fullscreen-content mjx-container {
-    margin: 0 !important;
-    font-size: 1.2em !important;
-}
-
-#output mjx-container[display="true"],
-.fullscreen-content mjx-container[display="true"] {
-    margin: 0 !important;
-    text-align: center;
-}
-
-#output mjx-container:not([display="true"]),
-.fullscreen-content mjx-container:not([display="true"]) {
-    margin: 0 0.25rem !important;
-    display: inline-block !important;
-}
-
-#output > div:has(br),
-.fullscreen-content > div:has(br),
-#output li > div:has(br),
-.fullscreen-content li > div:has(br) {
-    line-height: 2.4;
 }
 
 #output table,
@@ -810,12 +694,6 @@ h1 {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     border-radius: 8px;
     overflow: hidden;
-    transition: box-shadow 0.3s ease;
-}
-
-[data-theme="dark"] #output table,
-[data-theme="dark"] .fullscreen-content table {
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 #output th,
@@ -825,9 +703,6 @@ h1 {
     padding: 1rem;
     text-align: left;
     border-bottom: 1px solid var(--border-color);
-    line-height: 1.6;
-    color: var(--text-color);
-    transition: all 0.3s ease;
 }
 
 #output th,
@@ -836,7 +711,7 @@ h1 {
     font-weight: 600;
 }
 
-/* Fullscreen overlay */
+/* Fullscreen Overlay */
 .fullscreen-overlay {
     position: fixed;
     top: 0;
@@ -853,26 +728,17 @@ h1 {
     display: flex;
 }
 
-.fullscreen-header {
-    display: none;
-}
-
 #exit-fullscreen-btn {
     position: fixed;
     top: 1.5rem;
     right: 2rem;
     z-index: 1020;
-    
     border-radius: 50%;
-    padding: 0.75rem;
+    padding: 1rem;
     width: 50px;
     height: 50px;
-    
     font-size: 0;
-    gap: 0;
-
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-
     opacity: 0.7;
     transition: all 0.3s ease;
 }
@@ -880,12 +746,6 @@ h1 {
 #exit-fullscreen-btn:hover {
     opacity: 1;
     transform: scale(1.05);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
-}
-
-#exit-fullscreen-btn svg {
-    width: 24px;
-    height: 24px;
 }
 
 .fullscreen-content {
@@ -896,110 +756,138 @@ h1 {
     scroll-behavior: smooth;
 }
 
-@media (max-width: 768px) {
-    #frame {
-        border-radius: 0;
-        box-shadow: none;
-    }
+/* ============================================
+   NEW FEATURES STYLES (Merged from temp)
+   ============================================ */
 
-    header {
-        padding: 1rem;
-        flex-direction: column;
-        gap: 1rem;
-    }
-
-    .file-selection {
-        padding: 1rem;
-    }
-
-    #source,
-    #output {
-        padding: 1rem;
-    }
-
-    .editor-container {
-        height: calc(100vh - 250px);
-    }
-
-    #output,
-    .fullscreen-content {
-        font-size: 16px;
-        line-height: 1.7;
-        padding: 1rem;
-    }
-
-    #output h1,
-    .fullscreen-content h1 {
-        font-size: 2rem;
-        margin: 2rem 0 1rem 0;
-    }
-
-    #output h2,
-    .fullscreen-content h2 {
-        font-size: 1.75rem;
-        margin: 1.75rem 0 1rem 0;
-    }
-
-    #output h3,
-    .fullscreen-content h3 {
-        font-size: 1.5rem;
-    }
-
-    #exit-fullscreen-btn {
-        top: 1rem;
-        right: 1rem;
-        width: 44px;
-        height: 44px;
-        padding: 0.5rem;
-    }
-
-    #exit-fullscreen-btn svg {
-        width: 20px;
-        height: 20px;
-    }
-
-    .fullscreen-content {
-        padding: 1.5rem;
-    }
-
-    #output ul,
-    .fullscreen-content ul,
-    #output ol,
-    .fullscreen-content ol {
-        padding-left: 1.5rem;
-    }
+/* 1. Drag & Drop Overlay */
+#drop-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(37, 99, 235, 0.1);
+    border: 3px dashed var(--primary-color);
+    display: none;
+    z-index: 3000;
+    pointer-events: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 600;
+    color: var(--primary-color);
+    backdrop-filter: blur(2px);
 }
 
+.dragging #drop-overlay {
+    display: flex;
+}
+
+/* 2. Mermaid Diagrams */
+.mermaid {
+    display: flex;
+    justify-content: center;
+    margin: 1.5rem 0;
+    background: var(--bg-color);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+/* 3. Split View Mode */
+/* When editor-container has split-mode, rearrange children */
+.editor-container.split-mode {
+    flex-direction: row;
+    overflow: hidden;
+    /* Prevent outer scroll */
+}
+
+.editor-container.split-mode #source,
+.editor-container.split-mode #output {
+    display: block;
+    /* Show both */
+    width: 50%;
+    height: 100%;
+    /* Full height of container */
+    border-right: 1px solid var(--border-color);
+    padding: 1.5rem;
+}
+
+.editor-container.split-mode #output {
+    border-right: none;
+}
+
+/* Hide placeholder in split mode if file loaded */
+.editor-container.split-mode #placeholder {
+    display: none;
+    /* Note: logic in JS will handle placeholder removal usually */
+}
+
+/* 4. Print Optimization */
 @media print {
+    body {
+        background: white;
+        height: auto;
+        overflow: visible;
+        display: block;
+    }
+
+    header,
+    .controls,
     #reading-progress-bar,
     #toc-panel,
+    #source,
     #exit-fullscreen-btn,
-    #toc-tooltip {
+    #toc-tooltip,
+    .file-selection,
+    .tab-container {
         display: none !important;
     }
 
+    #frame {
+        box-shadow: none;
+        border: none;
+        max-width: 100%;
+        margin: 0;
+    }
+
+    #output {
+        display: block !important;
+        width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    .editor-container {
+        display: block;
+        height: auto;
+        overflow: visible;
+    }
+
+    .fullscreen-overlay {
+        display: none !important;
+    }
+
+    /* Ensure all text is black for print */
     #output,
-    .fullscreen-content {
-        font-size: 12pt;
-        line-height: 1.6;
-        color: #000;
+    #output * {
+        color: #000 !important;
+        box-shadow: none !important;
     }
 
-    #output h1,
-    .fullscreen-content h1 {
-        font-size: 18pt;
-        page-break-after: avoid;
+    a {
+        text-decoration: underline;
+    }
+}
+
+@media (max-width: 768px) {
+    .editor-container.split-mode {
+        flex-direction: column;
     }
 
-    #output h2,
-    .fullscreen-content h2 {
-        font-size: 16pt;
-        page-break-after: avoid;
-    }
-
-    #output h3,
-    .fullscreen-content h3 {
-        font-size: 14pt;
-        page-break-after: avoid;
+    .editor-container.split-mode #source,
+    .editor-container.split-mode #output {
+        width: 100%;
+        height: 50%;
     }
 }

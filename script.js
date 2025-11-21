@@ -6,7 +6,6 @@
 let currentScrollSpyHeadings = [];
 let currentScrollSpyContainer = null;
 let tocPanel = null;
-// 【新功能】Tooltip 元素
 let tocTooltip = null;
 
 
@@ -40,27 +39,68 @@ function loadScript() {
     });
 }
 
+/**
+ * 【新功能】Initialize Mermaid
+ */
+function initMermaid() {
+    if (window.mermaid) {
+        window.mermaid.initialize({ startOnLoad: false, theme: 'default' });
+    }
+}
+
+/**
+ * 【新功能】Process Mermaid Diagrams
+ * Finds standard markdown code blocks for mermaid and converts them to divs for rendering
+ * @param {HTMLElement} container - The container to search for mermaid blocks
+ */
+function renderMermaid(container) {
+    if (!window.mermaid || !container) return;
+
+    // Support for standard markdown-it output (pre > code.language-mermaid)
+    const mermaidBlocks = container.querySelectorAll('.language-mermaid');
+    
+    mermaidBlocks.forEach((block) => {
+        const content = block.innerText || block.textContent;
+        
+        // Create a new div for mermaid
+        const div = document.createElement('div');
+        div.className = 'mermaid';
+        div.textContent = content;
+        
+        // Replace the <pre> tag (parent of code) with the new div
+        // If logic differs based on parser, we might need to adjust checks
+        const pre = block.closest('pre');
+        if (pre) {
+            pre.parentNode.replaceChild(div, pre);
+        } else {
+            block.parentNode.replaceChild(div, block);
+        }
+    });
+
+    // Run mermaid rendering
+    try {
+        window.mermaid.run({
+            querySelector: '.mermaid',
+            nodes: container.querySelectorAll('.mermaid')
+        });
+    } catch (e) {
+        console.warn('Mermaid rendering error:', e);
+    }
+}
+
 // ============================================
 // Notification System
 // ============================================
 
-/**
- * Show notification message
- * @param {string} message - The message to display
- * @param {string} type - Type of notification: 'info', 'success', or 'error'
- */
 function showNotification(message, type = 'info') {
-    // Remove any existing notifications
     const existingNotification = document.querySelector('.notification');
     if (existingNotification) {
         existingNotification.remove();
     }
 
-    // Create a new notification
     const notification = document.createElement('div');
     notification.className = `notification ${type}`;
 
-    // Icon based on notification type
     let iconPath = '';
     if (type === 'success') {
         iconPath = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />';
@@ -77,11 +117,9 @@ function showNotification(message, type = 'info') {
         <div>${message}</div>
     `;
 
-    // Insert the notification at the top of the editor container
     const editorContainer = document.querySelector('.editor-container');
     editorContainer.insertBefore(notification, editorContainer.firstChild);
 
-    // Auto-dismiss after 5 seconds
     setTimeout(() => {
         notification.remove();
     }, 5000);
@@ -91,11 +129,6 @@ function showNotification(message, type = 'info') {
 // Markdown Conversion
 // ============================================
 
-/**
- * Convert markdown text to HTML
- * @param {string} markdownText - The markdown text to convert
- * @returns {string} The converted HTML
- */
 function convertMarkdown(markdownText) {
     if (!markdownText) {
         return '';
@@ -119,35 +152,22 @@ function convertMarkdown(markdownText) {
 // 【修復】內部連結處理
 // ============================================
 
-/**
- * 產生標準化的 Slug (ID)
- * 模擬 VSCode/GitHub 的規則
- * @param {string} text 
- * @returns {string}
- */
 function slugify(text) {
     return (text || '').trim().toLowerCase()
-        .replace(/\s+/g, '-')           // 空白轉連字號
-        .replace(/[^\w\u4e00-\u9fa5-]/g, '') // 移除特殊符號 (保留中英數、連字號、底線)
-        .replace(/-+/g, '-');           // 移除重複連字號
+        .replace(/\s+/g, '-')           
+        .replace(/[^\w\u4e00-\u9fa5-]/g, '') 
+        .replace(/-+/g, '-');           
 }
 
-/**
- * 修正內部錨點連結的行為
- * @param {HTMLElement} container - 包含連結的容器元素
- */
 function fixInternalLinks(container) {
     if (!container) return;
 
-    // 選取所有 href 開頭為 # 的連結
     const links = container.querySelectorAll('a[href^="#"]');
     
     links.forEach(link => {
-        // 移除 target 屬性，防止開新視窗
         link.removeAttribute('target');
         link.removeAttribute('rel');
 
-        // 重新綁定點擊事件
         link.addEventListener('click', (e) => {
             e.preventDefault();
             e.stopImmediatePropagation(); 
@@ -156,22 +176,14 @@ function fixInternalLinks(container) {
                 const href = link.getAttribute('href');
                 if (href.length <= 1) return; 
 
-                // 1. 嘗試尋找精確 ID
                 const targetId = decodeURIComponent(href.substring(1));
-                
-                // 【關鍵修復】
-                // 不使用 document.getElementById(targetId)，因為它會搜尋整個 DOM
-                // 改用 container.querySelector 並配合 CSS.escape 來處理數字開頭的 ID
-                // 這樣可以確保我們只在當前容器（例如全螢幕容器）內尋找目標
                 let targetElement = null;
                 try {
                     targetElement = container.querySelector(`#${CSS.escape(targetId)}`);
                 } catch (qsError) {
-                    // 萬一 CSS.escape 失敗或選擇器錯誤，保持 null 進入模糊匹配
                     console.warn('QuerySelector failed for ID:', targetId, qsError);
                 }
 
-                // 2. 模糊匹配 (Fallback)
                 if (!targetElement) {
                     const headings = container.querySelectorAll('h1, h2, h3, h4, h5, h6');
                     const cleanTarget = targetId.replace(/-/g, '').toLowerCase();
@@ -196,11 +208,7 @@ function fixInternalLinks(container) {
 
                 if (targetElement) {
                     targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-                    // 更新 URL hash
                     history.replaceState(null, null, '#' + targetId);
-                } else {
-                    console.warn(`Target element with id "${targetId}" not found in container.`);
                 }
             } catch (err) {
                 console.error('Error handling link click:', err);
@@ -214,9 +222,6 @@ function fixInternalLinks(container) {
 // Fullscreen Functionality
 // ============================================
 
-/**
- * Enter fullscreen mode
- */
 function enterFullscreen() {
     const overlay = document.getElementById('fullscreen-overlay');
     const fullscreenContent = document.getElementById('fullscreen-content');
@@ -240,14 +245,16 @@ function enterFullscreen() {
     document.addEventListener('keydown', handleEscapeKey);
 
     fullscreenContent.addEventListener('scroll', handleScrollEvents);
+    
+    // Process standard items
     generateTOC('#fullscreen-content');
     fixInternalLinks(fullscreenContent);
+    // 【新功能】Render Mermaid in fullscreen
+    renderMermaid(fullscreenContent);
+    
     handleScrollEvents({ target: fullscreenContent });
 }
 
-/**
- * Exit fullscreen mode
- */
 function exitFullscreen() {
     const overlay = document.getElementById('fullscreen-overlay');
     const fullscreenContent = document.getElementById('fullscreen-content');
@@ -268,14 +275,13 @@ function exitFullscreen() {
     document.removeEventListener('keydown', handleEscapeKey);
     fullscreenContent.removeEventListener('scroll', handleScrollEvents);
     
+    // Re-process standard items for main view
     generateTOC('#output');
     fixInternalLinks(outputContent);
+    renderMermaid(outputContent); // Ensure mermaid is rendered in main view
     handleScrollEvents({ target: outputContent });
 }
 
-/**
- * Toggle fullscreen mode
- */
 function toggleFullscreen() {
     const overlay = document.getElementById('fullscreen-overlay');
     if (overlay.classList.contains('active')) {
@@ -285,10 +291,6 @@ function toggleFullscreen() {
     }
 }
 
-/**
- * Handle ESC key press to exit fullscreen
- * @param {KeyboardEvent} event - The keyboard event
- */
 function handleEscapeKey(event) {
     if (event.key === 'Escape') {
         exitFullscreen();
@@ -324,11 +326,16 @@ function processFile(file) {
         document.getElementById('copy-btn').disabled = false;
         document.getElementById('fullscreen-btn').disabled = false;
         document.getElementById('refresh-btn').disabled = false;
+        // 【新功能】Enable print button
+        document.getElementById('print-btn').disabled = false;
 
         showNotification(`File "${file.name}" loaded successfully.`, 'success');
 
         generateTOC('#output');
         fixInternalLinks(outputElement);
+        // 【新功能】Render Mermaid
+        renderMermaid(outputElement);
+        
         handleScrollEvents({ target: outputElement });
     };
 
@@ -383,10 +390,16 @@ $x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}$
 ### 5.1 矩陣的「魔法數字」
 嘿,各位線性代數的戰友們!我們已經一起闖過了矩陣運算、解線性方程組、向量空間等重要關卡。今天,我們要來探索一個既神秘又充滿力量的概念——**行列式 (Determinant)**。
 
-你可能會問,為什麼需要行列式?前面學的不是已經能解決很多問題了嗎?沒錯,高斯消去法 (Gaussian elimination) 確實是解方程組 \\(A\\boldsymbol{x} = \\boldsymbol{b}\\) 的主力。但是,「行列式」這個從方陣 (square matrix) \\(A\\) 算出來的*單一數字*,卻蘊含了關於這個矩陣驚人的資訊量。
+### 5.2 測試 Mermaid 圖表 (新功能)
 
-### 5.2 行列式的特性
-想像一下,你有一個方陣 \\(A\\),你想知道它是不是可逆的 (invertible)?是不是奇異的 (singular)?它的行列式 (我們常寫作 \\(\\det(A)\\) 或 \\(|A|\\),注意!是直桿不是方括號喔!) 就能立刻告訴你答案!如果 \\(\\det(A) = 0\\),那 \\(A\\) 就是奇異矩陣,沒有逆矩陣 (inverse matrix)。反之,如果 \\(\\det(A) \\neq 0\\),那 \\(A\\) 就是可逆的!
+\`\`\`mermaid
+graph TD
+    A[開始] --> B{是否喜歡?}
+    B -- Yes --> C[太棒了!]
+    B -- No --> D[我們會改進]
+    C --> E[分享給朋友]
+    D --> E
+\`\`\`
 
 ## 第六章: 應用 (Applications)
 
@@ -394,9 +407,6 @@ $x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}$
 
 ### 6.1 克拉瑪法則 (Cramer's Rule)
 雖然計算量大,但克拉瑪法則在理論上很有趣。
-
-### 6.2 體積 (Volume)
-行列式的值也代表了向量所張開的平行多面體的（有向）體積。
 `;
 
     const sourceElement = document.getElementById('source');
@@ -416,11 +426,16 @@ $x = {-b \\pm \\sqrt{b^2-4ac} \\over 2a}$
     document.getElementById('copy-btn').disabled = false;
     document.getElementById('fullscreen-btn').disabled = false;
     document.getElementById('refresh-btn').disabled = false;
+    // 【新功能】Enable print button
+    document.getElementById('print-btn').disabled = false;
 
     showNotification('Example markdown loaded successfully.', 'success');
 
     generateTOC('#output');
     fixInternalLinks(outputElement);
+    // 【新功能】Render Mermaid
+    renderMermaid(outputElement);
+    
     handleScrollEvents({ target: outputElement });
 }
 
@@ -489,7 +504,7 @@ function updateThemeToggle(theme) {
 }
 
 // ============================================
-// 【新功能】閱讀進度 & TOC 捲動偵測
+// Reading Progress & TOC
 // ============================================
 
 function handleScrollEvents(event) {
@@ -522,11 +537,6 @@ function updateReadingProgress(event) {
     }
 }
 
-/**
- * 產生智慧導航面板 (TOC)
- * 並同時為所有標題生成標準化 ID
- * @param {string} contentSelector 
- */
 function generateTOC(contentSelector) {
     if (!tocPanel) {
         tocPanel = document.getElementById('toc-panel');
@@ -551,22 +561,16 @@ function generateTOC(contentSelector) {
     tocPanel.style.display = 'flex';
 
     headings.forEach((heading, index) => {
-        // 1. 計算標準 Slug ID
         let safeId = slugify(heading.textContent);
         
-        // 2. 檢查容器內唯一性 (Scoped Uniqueness)
-        // 【關鍵修復】只檢查 content 內，而不使用 document.getElementById
-        // 這允許全螢幕容器使用與主容器相同的 ID，解決連結重新命名的問題
         let uniqueId = safeId;
         let counter = 1;
         
-        // 使用 content.querySelector 而非 document.getElementById
         while (content.querySelector('#' + CSS.escape(uniqueId)) && content.querySelector('#' + CSS.escape(uniqueId)) !== heading) {
             uniqueId = `${safeId}-${counter}`;
             counter++;
         }
         
-        // 3. 強制賦予 ID
         if (!heading.id) {
             heading.id = uniqueId;
         } else {
@@ -638,6 +642,43 @@ function updateScrollSpy(event) {
     });
 }
 
+// ============================================
+// 【新功能】Drag & Drop Initialization
+// ============================================
+
+function initDragAndDrop() {
+    const body = document.body;
+    const overlay = document.getElementById('drop-overlay');
+    
+    if (!overlay) return;
+
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        body.addEventListener(eventName, (e) => { 
+            e.preventDefault(); 
+            e.stopPropagation(); 
+        }, false);
+    });
+
+    body.addEventListener('dragenter', () => {
+        body.classList.add('dragging');
+    });
+
+    // Ensure leave only triggers when leaving the overlay or window
+    overlay.addEventListener('dragleave', (e) => {
+        if (e.target === overlay) {
+            body.classList.remove('dragging');
+        }
+    });
+    
+    body.addEventListener('drop', (e) => {
+        body.classList.remove('dragging');
+        const file = e.dataTransfer.files[0];
+        if (file) {
+            processFile(file);
+        }
+    });
+}
+
 
 // ============================================
 // Application Initialization
@@ -647,6 +688,9 @@ async function init() {
     try {
         initTheme();
         await loadScript();
+        // 【新功能】
+        initMermaid();
+        initDragAndDrop();
 
         const sourceEditor = document.getElementById('source');
         sourceEditor.setAttribute('contenteditable', 'true');
@@ -665,6 +709,14 @@ async function init() {
         document.getElementById('fullscreen-btn').addEventListener('click', toggleFullscreen);
         document.getElementById('exit-fullscreen-btn').addEventListener('click', exitFullscreen);
         
+        // 【新功能】Print Button
+        const printBtn = document.getElementById('print-btn');
+        if (printBtn) {
+            printBtn.addEventListener('click', () => {
+                window.print();
+            });
+        }
+
         document.getElementById('refresh-btn').addEventListener('click', () => {
             const source = document.getElementById('source').textContent;
             const output = document.getElementById('output');
@@ -672,6 +724,8 @@ async function init() {
             
             generateTOC('#output');
             fixInternalLinks(output);
+            // 【新功能】Render Mermaid on refresh
+            renderMermaid(output);
             
             showNotification('Preview refreshed.', 'info');
         });
