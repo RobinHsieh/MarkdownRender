@@ -7,27 +7,174 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Markdown File Loader & Renderer</title>
     <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <!-- Mermaid JS for Diagrams (新增功能) -->
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
+
+    <style>
+        /* 讓 #frame 變成 Flex Column 佈局，最大化空間利用 */
+        #frame {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 2rem); /* 視窗高度扣除 body padding */
+            max-height: 100vh;
+        }
+
+        /* 調整 Header 高度與 Padding，更緊湊 */
+        header {
+            padding: 1rem 1.5rem;
+            flex-shrink: 0;
+        }
+
+        /* 新增：整合型工具列 */
+        .app-toolbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--bg-color);
+            border-bottom: 1px solid var(--border-color);
+            gap: 1rem;
+            flex-wrap: wrap;
+            flex-shrink: 0;
+        }
+
+        /* 左側：檔案控制區 */
+        .toolbar-group-left {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 300px;
+        }
+
+        /* 中間：分頁切換器 (改為膠囊樣式) */
+        .toolbar-group-center {
+            display: flex;
+            background-color: var(--header-bg);
+            padding: 4px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .toolbar-group-center .tab {
+            padding: 6px 20px;
+            border-bottom: none; /* 移除舊樣式 */
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        .toolbar-group-center .tab.active {
+            background-color: var(--card-bg);
+            color: var(--primary-color);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border-bottom: none; /* 移除舊樣式 */
+        }
+
+        /* 右側：功能按鈕區 */
+        .toolbar-group-right {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 調整按鈕大小以適應工具列 */
+        .app-toolbar .btn {
+            padding: 0.5rem 0.8rem;
+            font-size: 13px;
+        }
+        
+        .app-toolbar .btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* 編輯器容器：佔滿剩餘空間 */
+        .editor-container {
+            flex: 1;
+            height: auto; /* 覆蓋原本的固定高度計算 */
+            min-height: 0; /* 重要：讓 Flex item 可以收縮 */
+            display: flex;
+            flex-direction: column;
+            position: relative;
+        }
+
+        #source, #output {
+            padding: 2rem; /* 增加內距讓閱讀更舒適 */
+        }
+
+        /* 檔案輸入框微調 */
+        .file-input-container {
+            margin: 0;
+            flex: 1;
+            max-width: 400px;
+        }
+        
+        .file-input-label {
+            padding: 0.5rem 1rem;
+            font-size: 14px;
+        }
+
+        /* 底部狀態列 */
+        .status-footer {
+            padding: 6px 1.5rem;
+            font-size: 12px;
+            color: #6b7280;
+            background-color: var(--header-bg);
+            border-top: 1px solid var(--border-color);
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        [data-theme="dark"] .status-footer {
+            color: #9ca3af;
+        }
+
+        /* 隱藏舊的 tab-container 和 controls，因為我們重寫了結構 */
+        .tab-container, .controls, .file-selection {
+            display: none !important; 
+        }
+
+        /* RWD 調整 */
+        @media (max-width: 900px) {
+            .app-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 1rem;
+            }
+            .toolbar-group-center {
+                justify-content: center;
+            }
+            .toolbar-group-right {
+                justify-content: flex-end;
+            }
+            #frame {
+                height: auto;
+                min-height: 100vh;
+            }
+            .editor-container {
+                min-height: 500px;
+            }
+        }
+    </style>
 </head>
 
 <body>
-    <!-- Drag & Drop Overlay (新增功能) -->
     <div id="drop-overlay">Drop file to open</div>
 
-    <!-- 閱讀進度條 -->
     <div id="reading-progress-bar"></div>
 
     <div id="frame">
         <header>
             <h2>
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-                Markdown File Loader & Renderer
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right: 8px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Markdown Renderer
             </h2>
             <button class="theme-toggle" id="theme-toggle">
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -37,31 +184,56 @@
             </button>
         </header>
 
-        <div class="file-selection">
-            <div class="file-input-container">
-                <input type="file" id="file-input" class="file-input" accept=".md,.txt,.mmd,.markdown">
-                <label for="file-input" class="file-input-label">
+        <div class="app-toolbar">
+            <div class="toolbar-group-left">
+                <div class="file-input-container">
+                    <input type="file" id="file-input" class="file-input" accept=".md,.txt,.mmd,.markdown">
+                    <label for="file-input" class="file-input-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        </svg>
+                        <span class="file-name">Select File</span>
+                    </label>
+                </div>
+                <button class="btn btn-secondary" id="example-btn" title="Load Example">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span class="file-name">Select a Markdown file</span>
-                </label>
-                <div class="file-format-hint">Supported formats: .md, .txt, .mmd, .markdown</div>
+                    Example
+                </button>
             </div>
 
-            <button class="btn btn-secondary" id="example-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                Load Example
-            </button>
+            <div class="toolbar-group-center">
+                <div class="tab" id="source-tab">Source</div>
+                <div class="tab active" id="preview-tab">Preview</div>
+            </div>
+
+            <div class="toolbar-group-right">
+                <button class="btn btn-secondary" id="refresh-btn" disabled title="Refresh">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                </button>
+                <button class="btn btn-secondary" id="copy-btn" disabled title="Copy HTML">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                </button>
+                <button class="btn btn-secondary" id="print-btn" disabled title="Print">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                    </svg>
+                </button>
+                <button class="btn btn-secondary" id="fullscreen-btn" disabled title="Fullscreen">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                        <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z" />
+                    </svg>
+                </button>
+            </div>
         </div>
 
-        <div class="tab-container">
-            <div class="tab" id="source-tab">Source</div>
-            <div class="tab active" id="preview-tab">Preview</div>
-        </div>
+        <div class="file-selection"></div>
+        <div class="tab-container"></div>
 
         <div class="editor-container">
             <div id="source"></div>
@@ -77,42 +249,13 @@
             </div>
         </div>
 
-        <div class="controls">
-            <div class="btn-group">
-                <button class="btn btn-secondary" id="copy-btn" disabled>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                    Copy HTML
-                </button>
-                <!-- Print Button (新增功能) -->
-                <button class="btn btn-secondary" id="print-btn" disabled>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                    </svg>
-                    Print
-                </button>
-                <button class="btn btn-secondary" id="fullscreen-btn" disabled>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                        viewBox="0 0 16 16">
-                        <path
-                            d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z" />
-                    </svg>
-                    Fullscreen
-                </button>
-                <button class="btn" id="refresh-btn" disabled>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                    </svg>
-                    Refresh Preview
-                </button>
-            </div>
+        <div class="status-footer">
+            Supported formats: .md, .txt, .mmd, .markdown
         </div>
+
+        <div class="controls" style="display:none;"></div>
     </div>
 
-    <!-- Fullscreen overlay -->
     <div id="fullscreen-overlay" class="fullscreen-overlay">
         
         <nav id="toc-panel"></nav>

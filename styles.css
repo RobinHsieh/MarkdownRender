@@ -794,35 +794,6 @@ h1 {
     border-radius: 8px;
 }
 
-/* 3. Split View Mode */
-/* When editor-container has split-mode, rearrange children */
-.editor-container.split-mode {
-    flex-direction: row;
-    overflow: hidden;
-    /* Prevent outer scroll */
-}
-
-.editor-container.split-mode #source,
-.editor-container.split-mode #output {
-    display: block;
-    /* Show both */
-    width: 50%;
-    height: 100%;
-    /* Full height of container */
-    border-right: 1px solid var(--border-color);
-    padding: 1.5rem;
-}
-
-.editor-container.split-mode #output {
-    border-right: none;
-}
-
-/* Hide placeholder in split mode if file loaded */
-.editor-container.split-mode #placeholder {
-    display: none;
-    /* Note: logic in JS will handle placeholder removal usually */
-}
-
 /* 4. Print Optimization */
 @media print {
     body {
@@ -877,17 +848,5 @@ h1 {
 
     a {
         text-decoration: underline;
-    }
-}
-
-@media (max-width: 768px) {
-    .editor-container.split-mode {
-        flex-direction: column;
-    }
-
-    .editor-container.split-mode #source,
-    .editor-container.split-mode #output {
-        width: 100%;
-        height: 50%;
     }
 }
