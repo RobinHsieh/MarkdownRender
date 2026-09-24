@@ -656,6 +656,58 @@ h1 {
     border: none;
 }
 
+/* GitHub Dark-inspired syntax colors override Mathpix's light palette.
+   Scope to fenced/indented code in both reading views, preserving inline code. */
+[data-theme="dark"] :is(#output, .fullscreen-content) pre code {
+    color: #c9d1d9;
+}
+
+[data-theme="dark"] :is(#output, .fullscreen-content) pre code :is(.hljs-subst, .hljs-tag) {
+    color: #c9d1d9;
+}
+
+[data-theme="dark"] :is(#output, .fullscreen-content) pre code :is(.hljs-comment, .hljs-quote) {
+    color: #8b949e;
+}
+
+[data-theme="dark"] :is(#output, .fullscreen-content) pre code :is(.hljs-keyword, .hljs-selector-tag, .hljs-doctag, .hljs-meta-keyword) {
+    color: #ff7b72;
+}
+
+[data-theme="dark"] :is(#output, .fullscreen-content) pre code :is(.hljs-command, .hljs-number, .hljs-literal, .hljs-attr, .hljs-attribute, .hljs-type, .hljs-meta, .hljs-selector-id, .hljs-selector-class) {
+    color: #79c0ff;
+}
+
+[data-theme="dark"] :is(#output, .fullscreen-content) pre code :is(.hljs-string, .hljs-regexp, .hljs-link, .hljs-meta-string, .hljs-meta .hljs-string) {
+    color: #a5d6ff;
+}
+
+[data-theme="dark"] :is(#output, .fullscreen-content) pre code .hljs-title {
+    color: #d2a8ff;
+}
+
+[data-theme="dark"] :is(#output, .fullscreen-content) pre code :is(.hljs-variable, .hljs-template-variable, .hljs-built_in, .hljs-builtin-name, .hljs-symbol) {
+    color: #ffa657;
+}
+
+[data-theme="dark"] :is(#output, .fullscreen-content) pre code :is(.hljs-name, .hljs-bullet) {
+    color: #7ee787;
+}
+
+[data-theme="dark"] :is(#output, .fullscreen-content) pre code .hljs-section {
+    color: #58a6ff;
+}
+
+[data-theme="dark"] :is(#output, .fullscreen-content) pre code .hljs-addition {
+    color: #aff5b4;
+    background-color: #033a16;
+}
+
+[data-theme="dark"] :is(#output, .fullscreen-content) pre code .hljs-deletion {
+    color: #ffdcd7;
+    background-color: #67060c;
+}
+
 #output a,
 .fullscreen-content a {
     color: var(--primary-color);
